@@ -11,14 +11,15 @@ This document describes the full relational data model for the platform. All tab
 3. [GroupMember](#3-groupmember)
 4. [DockerServer](#4-dockerserver)
 5. [Template](#5-template)
-6. [Feature](#6-feature)
-7. [Project](#7-project)
-8. [ProjectRepository](#8-projectrepository)
-9. [ProjectFeature](#9-projectfeature)
-10. [ProjectGroup](#10-projectgroup)
-11. [DockerServerGroup](#11-dockerservergroup)
-12. [Workspace](#12-workspace)
-13. [WorkspaceService](#13-workspaceservice)
+6. [TemplateFeature](#6-templatefeature)
+7. [Feature](#7-feature)
+8. [Project](#8-project)
+9. [ProjectRepository](#9-projectrepository)
+10. [ProjectFeature](#10-projectfeature)
+11. [ProjectGroup](#11-projectgroup)
+12. [DockerServerGroup](#12-dockerservergroup)
+13. [Workspace](#13-workspace)
+14. [WorkspaceService](#14-workspaceservice)
 
 ---
 
@@ -113,26 +114,50 @@ Represents a Docker host that the platform can connect to in order to provision 
 
 ## 5. Template
 
-Defines a reusable environment blueprint. A template describes what base Docker image and default configuration to use when creating a workspace container.
+Defines a reusable environment blueprint. A template describes the Alpine base image version, the list of APT packages to install, shared folder mounts, optional raw Dockerfile instructions, exposed ports, default environment variables, and the set of features (with their options) to activate. All workspace containers built from this template share this configuration.
 
-| Field          | Type      | Constraints  | Description                                            |
-|----------------|-----------|--------------|--------------------------------------------------------|
-| `id`           | `uuid`    | PK           | Unique identifier                                      |
-| `name`         | `string`  | NOT NULL     | Template name (e.g. "Node.js 20", "Python 3.12")       |
-| `description`  | `string`  | NULLABLE     | Short description of the environment                   |
-| `dockerImage`  | `string`  | NOT NULL     | Docker image reference (e.g. `node:20-bullseye`)       |
-| `defaultPorts` | `json`    | NOT NULL     | Array of default exposed ports and their protocols     |
-| `defaultEnv`   | `json`    | NOT NULL     | Default environment variables (key/value pairs)        |
-| `startCommand` | `string`  | NULLABLE     | Override container start command                       |
-| `createdAt`    | `datetime`| NOT NULL     | Creation timestamp                                     |
-| `updatedAt`    | `datetime`| NOT NULL     | Last update timestamp                                  |
+| Field                 | Type      | Constraints  | Description                                                                                      |
+|-----------------------|-----------|--------------|--------------------------------------------------------------------------------------------------|
+| `id`                  | `uuid`    | PK           | Unique identifier                                                                                |
+| `name`                | `string`  | NOT NULL     | Template name (e.g. "Node.js 20", "Python 3.12")                                                 |
+| `description`         | `string`  | NULLABLE     | Short description of the environment                                                             |
+| `alpineMajor`         | `int`     | NOT NULL     | Alpine Linux major version (e.g. `3`)                                                            |
+| `alpineMinor`         | `int`     | NOT NULL     | Alpine Linux minor version (e.g. `19`)                                                           |
+| `aptPackages`         | `json`    | NOT NULL     | Ordered list of APK package names to install at build time (e.g. `["nodejs", "npm", "git"]`)     |
+| `sharedFolders`       | `json`    | NOT NULL     | List of absolute paths to mount as shared volumes across all workspaces (e.g. `["/home/user"]`)  |
+| `dockerInstructions`  | `text`    | NULLABLE     | Raw Dockerfile instructions appended after the base setup (e.g. `RUN`, `COPY`, `ENV` directives) |
+| `defaultPorts`        | `json`    | NOT NULL     | Array of default exposed ports and their protocols                                               |
+| `defaultEnv`          | `json`    | NOT NULL     | Default environment variables injected into every workspace container (key/value pairs)          |
+| `startCommand`        | `string`  | NULLABLE     | Override the s6-overlay entrypoint command if needed                                             |
+| `createdAt`           | `datetime`| NOT NULL     | Creation timestamp                                                                               |
+| `updatedAt`           | `datetime`| NOT NULL     | Last update timestamp                                                                            |
 
 **Relations:**
 - Has many `Project`
+- Has many `TemplateFeature`
 
 ---
 
-## 6. Feature
+## 6. TemplateFeature
+
+Join table linking a template to the features it activates. Each entry can carry feature-specific option overrides (e.g. default database name, port, version) that will be applied when a workspace is provisioned from this template.
+
+| Field        | Type      | Constraints      | Description                                                                          |
+|--------------|-----------|------------------|--------------------------------------------------------------------------------------|
+| `templateId` | `uuid`    | FK → Template    | Referenced template                                                                  |
+| `featureId`  | `uuid`    | FK → Feature     | Referenced feature                                                                   |
+| `options`    | `json`    | NOT NULL         | Feature-specific option overrides as key/value pairs (empty object `{}` if none)     |
+
+**Primary key:** composite (`templateId`, `featureId`)
+
+**Options examples:**
+- PostgreSQL feature: `{ "version": "16", "defaultDb": "workspace", "port": 5432 }`
+- Redis feature: `{ "version": "7", "port": 6379 }`
+- A feature with no configurable options: `{}`
+
+---
+
+## 7. Feature
 
 Represents an optional add-on that can be attached to a project (e.g. a database sidecar, a cache service, a tool like pgAdmin). Each feature may spin up a companion container or only inject environment configuration.
 
@@ -148,11 +173,12 @@ Represents an optional add-on that can be attached to a project (e.g. a database
 | `updatedAt`   | `datetime`| NOT NULL     | Last update timestamp                                    |
 
 **Relations:**
+- Has many `TemplateFeature`
 - Has many `ProjectFeature`
 
 ---
 
-## 7. Project
+## 8. Project
 
 A project groups one or more Git repositories, a template, and a set of features. Users with the right access level can deploy workspaces from it.
 
@@ -177,7 +203,7 @@ A project groups one or more Git repositories, a template, and a set of features
 
 ---
 
-## 8. ProjectRepository
+## 9. ProjectRepository
 
 Links one or more Git repositories to a project. When a workspace is created, the listed repositories are cloned or mounted inside the container.
 
@@ -195,7 +221,7 @@ Links one or more Git repositories to a project. When a workspace is created, th
 
 ---
 
-## 9. ProjectFeature
+## 10. ProjectFeature
 
 Join table connecting a project to the features it uses.
 
@@ -208,7 +234,7 @@ Join table connecting a project to the features it uses.
 
 ---
 
-## 10. ProjectGroup
+## 11. ProjectGroup
 
 Defines which groups have access to a project and at what permission level. Access to a project is granted exclusively through group membership — individual user assignment is not supported. The project owner always retains full control regardless of group rules.
 
@@ -230,7 +256,7 @@ Defines which groups have access to a project and at what permission level. Acce
 
 ---
 
-## 11. DockerServerGroup
+## 12. DockerServerGroup
 
 Defines which groups have access to a Docker server. When a workspace is deployed, the platform collects all servers accessible to any group that has access to the project, then selects the most available one.
 
@@ -252,7 +278,7 @@ Defines which groups have access to a Docker server. When a workspace is deploye
 
 ---
 
-## 12. Workspace
+## 13. Workspace
 
 A running or stopped development environment. A workspace is tied to a project, a user, a specific branch, and a Docker server. It can be pinned to prevent automatic shutdown and deletion.
 
@@ -290,7 +316,7 @@ A running or stopped development environment. A workspace is tied to a project, 
 
 ---
 
-## 13. WorkspaceService
+## 14. WorkspaceService
 
 Describes an individual service exposed by a workspace (e.g. a web server, a terminal, a database port). Used by the UI to show users what is accessible and how.
 
