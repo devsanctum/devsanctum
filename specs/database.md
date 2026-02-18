@@ -13,9 +13,10 @@ This document describes the full relational data model for the platform. All tab
 5. [Project](#5-project)
 6. [ProjectRepository](#6-projectrepository)
 7. [ProjectFeature](#7-projectfeature)
-8. [ProjectMember](#8-projectmember)
-9. [Workspace](#9-workspace)
-10. [WorkspaceService](#10-workspaceservice)
+8. [ProjectDockerServer](#8-projectdockerserver)
+9. [ProjectMember](#9-projectmember)
+10. [Workspace](#10-workspace)
+11. [WorkspaceService](#11-workspaceservice)
 
 ---
 
@@ -56,11 +57,20 @@ Represents a Docker host that the platform can connect to in order to provision 
 | `caCert`     | `text`    | NULLABLE         | CA certificate content (PEM) for TLS                |
 | `clientCert` | `text`    | NULLABLE         | Client certificate content (PEM) for mTLS           |
 | `clientKey`  | `text`    | NULLABLE         | Client key content (PEM) for mTLS                   |
-| `status`     | `enum`    | NOT NULL         | `ONLINE`, `OFFLINE`, `UNREACHABLE`                  |
-| `createdAt`  | `datetime`| NOT NULL         | Registration timestamp                              |
-| `updatedAt`  | `datetime`| NOT NULL         | Last update timestamp                               |
+| `status`              | `enum`    | NOT NULL         | `ONLINE`, `OFFLINE`, `UNREACHABLE`                              |
+| `cpuCores`            | `int`     | NULLABLE         | Total logical CPU cores reported by the Docker daemon           |
+| `ramTotalMb`          | `int`     | NULLABLE         | Total RAM in megabytes                                          |
+| `ramUsedMb`           | `int`     | NULLABLE         | Currently used RAM in megabytes                                 |
+| `diskTotalGb`         | `float`   | NULLABLE         | Total disk capacity in gigabytes (Docker root directory)        |
+| `diskUsedGb`          | `float`   | NULLABLE         | Used disk space in gigabytes                                    |
+| `resourcesUpdatedAt`  | `datetime`| NULLABLE         | Timestamp of the last successful resource poll                  |
+| `createdAt`           | `datetime`| NOT NULL         | Registration timestamp                                          |
+| `updatedAt`           | `datetime`| NOT NULL         | Last update timestamp                                           |
+
+**Resource polling:** The platform polls each `ONLINE` server on a configurable interval (default: 60 seconds) using dockerode to refresh CPU, RAM, and disk metrics. If a server becomes unreachable, `status` is updated and polling is suspended until it recovers.
 
 **Relations:**
+- Has many `ProjectDockerServer`
 - Has many `Workspace`
 
 ---
@@ -126,6 +136,7 @@ A project groups one or more Git repositories, a template, and a set of features
 - Belongs to `Template`
 - Has many `ProjectRepository`
 - Has many `ProjectFeature`
+- Has many `ProjectDockerServer`
 - Has many `ProjectMember`
 - Has many `Workspace`
 
@@ -162,7 +173,26 @@ Join table connecting a project to the features it uses.
 
 ---
 
-## 8. ProjectMember
+## 8. ProjectDockerServer
+
+Join table assigning one or more Docker servers to a project. When a workspace is deployed, the platform selects the most available server from this pool using live resource metrics.
+
+| Field           | Type   | Constraints         | Description                                                              |
+|-----------------|--------|---------------------|--------------------------------------------------------------------------|
+| `projectId`     | `uuid` | FK → Project        | Referenced project                                                       |
+| `dockerServerId`| `uuid` | FK → DockerServer   | Referenced Docker server                                                 |
+
+**Primary key:** composite (`projectId`, `dockerServerId`)
+
+**Server selection logic at workspace deployment:**
+1. Collect all `ONLINE` servers assigned to the project via this table.
+2. Rank by available RAM (`ramTotalMb - ramUsedMb`) descending.
+3. Assign the workspace to the server with the most free RAM.
+4. If all assigned servers are offline or unreachable, deployment fails with an actionable error.
+
+---
+
+## 9. ProjectMember
 
 Defines access control for users on a project. The owner is not stored here — membership applies to non-owner users only.
 
@@ -183,7 +213,7 @@ Defines access control for users on a project. The owner is not stored here — 
 
 ---
 
-## 9. Workspace
+## 10. Workspace
 
 A running or stopped development environment. A workspace is tied to a project, a user, a specific branch, and a Docker server. It can be pinned to prevent automatic shutdown and deletion.
 
@@ -221,7 +251,7 @@ A running or stopped development environment. A workspace is tied to a project, 
 
 ---
 
-## 10. WorkspaceService
+## 11. WorkspaceService
 
 Describes an individual service exposed by a workspace (e.g. a web server, a terminal, a database port). Used by the UI to show users what is accessible and how.
 
@@ -249,9 +279,11 @@ User ──< ProjectMember >── Project ──< ProjectRepository
                               │
                          ProjectFeature >── Feature
                               │
+                         ProjectDockerServer >── DockerServer
+                              │
                          Workspace ──< WorkspaceService
                               │
-                         DockerServer
+                      (selected DockerServer)
 ```
 
 ## Access Control Summary
