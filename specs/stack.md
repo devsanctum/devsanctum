@@ -17,6 +17,11 @@ This document defines the core tooling used in this project.
 ## Frontend
 - **React** is used to build the web application UI.
 
+## Email
+- **Nodemailer** is used to send transactional emails (invitations, notifications).
+- Supports any SMTP server. Credentials are configured via platform administration settings.
+- A `MailService` abstraction wraps Nodemailer so the transport can be swapped (e.g. for testing with a mock or a local SMTP such as Mailhog).
+
 ## Docker Management
 - **dockerode** is used to interact with Docker from the application code (container lifecycle, inspection, and runtime operations).
 
@@ -37,4 +42,5 @@ This document defines the core tooling used in this project.
 - Database: PostgreSQL
 - Frontend: React
 - Docker SDK: dockerode
+- Email: Nodemailer
 - Reverse Proxy: Traefik
