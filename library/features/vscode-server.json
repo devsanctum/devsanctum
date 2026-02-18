@@ -1,5 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/devsanctum/devsanctum/main/library/schemas/feature.schema.json",
   "id": "vscode-server",
   "version": "1.0.0",
   "name": "VS Code Server",
