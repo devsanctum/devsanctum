@@ -20,6 +20,8 @@
     "VSCODE_PORT": "{{option.port}}",
     "WORKSPACE_DIR": "{{option.workspace_dir}}"
   },
+  "minRamMb": 512,
+  "minDiskGb": 0.5,
   "options": [
     {
       "key": "version",

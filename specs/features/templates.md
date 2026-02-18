@@ -17,6 +17,9 @@ An admin defines a new template by providing:
 - **Exposed ports** with protocols.
 - **Default environment variables**.
 - An optional **start command** override.
+- **Minimum resource requirements**:
+  - **`minRamMb`** — minimum free RAM in MB the Docker host must have before a workspace from this template can be deployed (default: 256).
+  - **`minDiskGb`** — minimum free disk space in GB required on the Docker host (default: 1.0).
 - A selection of **features** with per-feature option overrides (e.g. PostgreSQL version, default database name).
 
 ### UC-2: List all templates

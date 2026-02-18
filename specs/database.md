@@ -135,6 +135,8 @@ Defines a reusable environment blueprint. A template describes the Alpine base i
 | `defaultPorts`        | `json`    | NOT NULL     | Array of default exposed ports and their protocols                                               |
 | `defaultEnv`          | `json`    | NOT NULL     | Default environment variables injected into every workspace container (key/value pairs)          |
 | `startCommand`        | `string`  | NULLABLE     | Override the s6-overlay entrypoint command if needed                                             |
+| `minRamMb`            | `int`     | NOT NULL, DEFAULT 256 | Minimum RAM in megabytes required to deploy a workspace from this template. Used during Docker server selection. |
+| `minDiskGb`           | `float`   | NOT NULL, DEFAULT 1.0 | Minimum free disk space in gigabytes required on the target Docker server.                |
 | `createdAt`           | `datetime`| NOT NULL     | Creation timestamp                                                                               |
 | `updatedAt`           | `datetime`| NOT NULL     | Last update timestamp                                                                            |
 
@@ -180,8 +182,17 @@ Represents an optional add-on that can be activated on a template. Each feature 
 | `s6RunScript`          | `text`    | NULLABLE     | Content of the s6-overlay `run` script for this service. Supports `{{option.KEY}}` interpolation. |
 | `ports`                | `json`    | NOT NULL     | Array of port definitions exposed by this feature. Each entry: `{ name, port, type }` where `type` is `HTTP`, `HTTPS`, `WEBSOCKET`, or `CUSTOM`. |
 | `defaultEnv`           | `json`    | NOT NULL     | Default environment variables injected into the workspace at runtime. Supports `{{option.KEY}}` interpolation. |
+| `minRamMb`             | `int`     | NOT NULL, DEFAULT 0   | Additional RAM in megabytes this feature requires on top of the template baseline. Used during Docker server eligibility check. |
+| `minDiskGb`            | `float`   | NOT NULL, DEFAULT 0.0 | Additional disk space in gigabytes this feature requires on the target Docker server.    |
 | `createdAt`            | `datetime`| NOT NULL     | Creation timestamp                                                                         |
 | `updatedAt`            | `datetime`| NOT NULL     | Last update timestamp                                                                      |
+
+**Resource requirement resolution:**
+The effective minimum requirements for a workspace are computed as:
+- `effectiveMinRamMb = max(template.minRamMb, sum of all activated features' minRamMb)`
+- `effectiveMinDiskGb = max(template.minDiskGb, sum of all activated features' minDiskGb)`
+
+During workspace deployment, only Docker servers with `(ramTotalMb - ramUsedMb) >= effectiveMinRamMb` and `(diskTotalGb - diskUsedGb) >= effectiveMinDiskGb` are eligible.
 
 **Relations:**
 - Has many `FeatureOption`
@@ -234,6 +245,8 @@ A project groups one or more Git repositories, a template, and a set of features
 | `ownerId`     | `uuid`    | FK → User         | The user who owns this project                           |
 | `templateId`  | `uuid`    | FK → Template     | Template used to provision workspace containers          |
 | `visibility`  | `enum`    | NOT NULL          | `PUBLIC` or `PRIVATE`                                    |
+| `minRamMb`    | `int`     | NULLABLE          | Override: minimum RAM in megabytes required to deploy a workspace in this project. If set, supersedes the template value when higher. |
+| `minDiskGb`   | `float`   | NULLABLE          | Override: minimum free disk in gigabytes required. If set, supersedes the template value when higher. |
 | `createdAt`   | `datetime`| NOT NULL          | Creation timestamp                                       |
 | `updatedAt`   | `datetime`| NOT NULL          | Last update timestamp                                    |
 
@@ -316,9 +329,13 @@ Defines which groups have access to a Docker server. When a workspace is deploye
 1. Collect all groups that have access to the project (via `ProjectGroup`).
 2. Collect all `ONLINE` Docker servers assigned to those groups (via `DockerServerGroup`).
 3. Deduplicate the server pool.
-4. Rank by available RAM (`ramTotalMb - ramUsedMb`) descending.
-5. Assign the workspace to the server with the most free RAM.
-6. If no eligible server is available, deployment fails with an actionable error.
+4. Compute the effective resource requirements:
+   - `effectiveMinRamMb = max(project.minRamMb ?? template.minRamMb, Σ features.minRamMb)`
+   - `effectiveMinDiskGb = max(project.minDiskGb ?? template.minDiskGb, Σ features.minDiskGb)`
+5. Filter servers where `(ramTotalMb - ramUsedMb) >= effectiveMinRamMb` and `(diskTotalGb - diskUsedGb) >= effectiveMinDiskGb`.
+6. Rank eligible servers by available RAM descending.
+7. Assign the workspace to the top-ranked server.
+8. If no eligible server is available, deployment fails with an actionable error listing the requirement vs available capacity.
 
 ---
 

@@ -31,6 +31,8 @@
     "NODE_ENV": "development",
     "PATH": "/workspace/node_modules/.bin:$PATH"
   },
+  "minRamMb": 512,
+  "minDiskGb": 2.0,
   "features": [
     {
       "featureId": "vscode-server",

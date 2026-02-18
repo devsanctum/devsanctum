@@ -9,6 +9,7 @@ A project is the central unit of the platform. It groups one or more Git reposit
 
 ### UC-1: Create a project
 A user creates a project by providing a name, selecting a template, adding one or more Git repository URLs, selecting features, and setting visibility (public or private).
+The user may also set **minimum resource requirements** (`minRamMb`, `minDiskGb`) on the project to override or raise the template baseline. These values are used at workspace deployment time to filter eligible Docker servers.
 
 ### UC-2: List accessible projects
 A user sees all projects they own or that are accessible through a group they belong to. Public projects are also discoverable by authenticated users.
@@ -17,7 +18,7 @@ A user sees all projects they own or that are accessible through a group they be
 A user views the project configuration: repositories, template, features, assigned groups (with roles), and their own effective role (derived from group membership).
 
 ### UC-4: Edit a project
-The owner or a `MANAGE`-level member can update the project name, description, repositories, template, features, and visibility.
+The owner or a `MANAGE`-level member can update the project name, description, repositories, template, features, visibility, and resource requirements (`minRamMb`, `minDiskGb`).
 
 ### UC-5: Manage project group access
 The owner or a `MANAGE`-level member assigns one or more groups to the project, each with a role (`READ`, `DEPLOY`, `MANAGE`). All members of an assigned group inherit that role on the project. The role can be changed or the group removed at any time.
@@ -48,7 +49,8 @@ The owner or a `MANAGE` member toggles visibility to `PUBLIC`. Public projects a
   2. **Template** — Select from a card grid of available templates.
   3. **Repositories** — Add one or more Git URLs with a short name each.
   4. **Features** — Multi-select feature cards.
-  5. **Review** — Summary before saving.
+  5. **Resources** — Optional overrides for `minRamMb` and `minDiskGb`. Displays the effective requirement computed from template + features so the user can see the current floor before overriding.
+  6. **Review** — Summary before saving.
 - CTA: **Create Project**.
 
 ### Project Detail Page (`/projects/:id`)
@@ -57,7 +59,7 @@ The owner or a `MANAGE` member toggles visibility to `PUBLIC`. Public projects a
   - **Overview** — Description, repository list, feature list.
   - **Workspaces** — List of workspaces belonging to this project (see workspace feature).
   - **Access** — Group assignment list with roles.
-  - **Settings** — Edit form (name, description, repositories, template, features, visibility). Danger zone: delete project.
+  - **Settings** — Edit form (name, description, repositories, template, features, visibility, resource requirements). Danger zone: delete project.
 
 ### Access Tab
 - Table: **Group name**, **Member count**, **Role** (dropdown to change), **Remove** button.

@@ -12,6 +12,8 @@ An admin defines a new feature by providing:
 - A name and optional description.
 - The list of **APK packages** to install.
 - The **Alpine version range** (min version, optional max version).
+- **Minimum RAM** (`minRamMb`) — additional RAM this feature requires on the Docker host (default: 0).
+- **Minimum disk** (`minDiskGb`) — additional disk space this feature requires on the Docker host (default: 0).
 - Optional **Docker instructions** — a raw Dockerfile block (e.g. `COPY`, `RUN`, `ENV`) supporting `{{option.KEY}}` variable interpolation.
 - An optional **s6-overlay service**: service name and the content of the `run` script (also supports `{{option.KEY}}` interpolation).
 - The **ports** exposed, each with a name, port number, and type (`HTTP`, `HTTPS`, `WEBSOCKET`, `CUSTOM`).
@@ -58,6 +60,9 @@ When a template activates a feature, the platform validates that all `required` 
 - **Alpine Compatibility** section:
   - **Min Alpine version** (required, e.g. `3.18`)
   - **Max Alpine version** (optional — leave blank for no upper bound)
+- **Resource Requirements** section:
+  - **Min RAM (MB)** — numeric input (default: 0). Tooltip: "Additional RAM this feature contributes to the workspace requirement."
+  - **Min disk (GB)** — numeric input with one decimal (default: 0). Tooltip: "Additional disk space this feature requires on the target Docker host."
 - **APK Packages** section:
   - Dynamic tag-input list of package names (type + Enter to add, click × to remove).
 - **Docker Instructions** section:

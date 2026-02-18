@@ -3,7 +3,7 @@
 ## Purpose
 Allow platform administrators to register and manage Docker daemon hosts. These hosts are used to provision workspace containers. Multiple servers can be registered to distribute workloads or support different environments.
 
-Each registered server is continuously monitored for resource usage (CPU cores, RAM, disk). Projects can be assigned one or more Docker servers. When a workspace is deployed, the platform selects the server with the most available resources among those assigned to the project, ensuring even load distribution.
+Each registered server is continuously monitored for resource usage (CPU cores, RAM, disk). Servers are pooled at the group level and shared across projects. When a workspace is deployed, the platform computes the **effective resource requirements** (combining template and activated feature minimums, optionally raised by a project-level override) and filters the server pool to only those servers with sufficient free RAM and disk, then picks the most available one.
 
 ---
 
@@ -36,7 +36,16 @@ The platform periodically polls each `ONLINE` Docker server via dockerode to col
 Metrics are stored on the `DockerServer` record and updated at each polling interval. A `resourcesUpdatedAt` timestamp tracks data freshness. If a server becomes unreachable, its resource data is preserved but shown as stale.
 
 ### UC-8: Assign Docker servers to groups
-An admin assigns one or more registered Docker servers to one or more groups. When a workspace is deployed, the platform collects all servers accessible to any group that has access to the project, then selects the most available server (by free RAM) from that pool. This ensures resources are shared at the group level without requiring per-project server configuration.
+An admin assigns one or more registered Docker servers to one or more groups. When a workspace is deployed the platform runs the following server selection algorithm:
+1. Collect all groups that have access to the project (via `ProjectGroup`).
+2. Collect all `ONLINE` Docker servers assigned to those groups (via `DockerServerGroup`).
+3. Deduplicate the server pool.
+4. Compute effective requirements:
+   - `effectiveMinRamMb = max(project.minRamMb ?? template.minRamMb, Σ features.minRamMb)`
+   - `effectiveMinDiskGb = max(project.minDiskGb ?? template.minDiskGb, Σ features.minDiskGb)`
+5. **Filter** the pool: keep only servers where `(ramTotalMb − ramUsedMb) ≥ effectiveMinRamMb` and `(diskTotalGb − diskUsedGb) ≥ effectiveMinDiskGb`.
+6. Rank eligible servers by available RAM descending, pick the top one.
+7. If no server passes the filter, deployment fails with an error listing the requirement vs. each server's available capacity.
 
 ---
 
