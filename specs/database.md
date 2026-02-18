@@ -13,13 +13,14 @@ This document describes the full relational data model for the platform. All tab
 5. [Template](#5-template)
 6. [TemplateFeature](#6-templatefeature)
 7. [Feature](#7-feature)
-8. [Project](#8-project)
-9. [ProjectRepository](#9-projectrepository)
-10. [ProjectFeature](#10-projectfeature)
-11. [ProjectGroup](#11-projectgroup)
-12. [DockerServerGroup](#12-dockerservergroup)
-13. [Workspace](#13-workspace)
-14. [WorkspaceService](#14-workspaceservice)
+8. [FeatureOption](#8-featureoption)
+9. [Project](#9-project)
+10. [ProjectRepository](#10-projectrepository)
+11. [ProjectFeature](#11-projectfeature)
+12. [ProjectGroup](#12-projectgroup)
+13. [DockerServerGroup](#13-dockerservergroup)
+14. [Workspace](#14-workspace)
+15. [WorkspaceService](#15-workspaceservice)
 
 ---
 
@@ -159,26 +160,63 @@ Join table linking a template to the features it activates. Each entry can carry
 
 ## 7. Feature
 
-Represents an optional add-on that can be attached to a project (e.g. a database sidecar, a cache service, a tool like pgAdmin). Each feature may spin up a companion container or only inject environment configuration.
+Represents an optional add-on that can be activated on a template. Each feature declares its Alpine compatibility range, the APK packages it requires, Docker build instructions, an s6-overlay service definition, the ports it exposes, and a list of configurable options.
 
-| Field         | Type      | Constraints  | Description                                              |
-|---------------|-----------|--------------|----------------------------------------------------------|
-| `id`          | `uuid`    | PK           | Unique identifier                                        |
-| `name`        | `string`  | NOT NULL     | Feature name (e.g. "PostgreSQL", "Redis", "MailHog")     |
-| `description` | `string`  | NULLABLE     | Short description of what this feature provides          |
-| `dockerImage` | `string`  | NULLABLE     | Docker image to run as a sidecar (null = config only)    |
-| `defaultEnv`  | `json`    | NOT NULL     | Default environment variables injected into the workspace|
-| `defaultPorts`| `json`    | NOT NULL     | Ports exposed by this feature                            |
-| `createdAt`   | `datetime`| NOT NULL     | Creation timestamp                                       |
-| `updatedAt`   | `datetime`| NOT NULL     | Last update timestamp                                    |
+| Field                  | Type      | Constraints  | Description                                                                                |
+|------------------------|-----------|--------------|--------------------------------------------------------------------------------------------|
+| `id`                   | `uuid`    | PK           | Unique identifier                                                                          |
+| `name`                 | `string`  | NOT NULL     | Feature name (e.g. "PostgreSQL", "Redis", "MailHog")                                      |
+| `description`          | `string`  | NULLABLE     | Short description of what this feature provides                                            |
+| `apkPackages`          | `json`    | NOT NULL     | Array of APK package names to install (e.g. `["postgresql16", "postgresql16-client"]`)     |
+| `alpineMinVersion`     | `string`  | NOT NULL     | Minimum compatible Alpine version (e.g. `"3.18"`)                                         |
+| `alpineMaxVersion`     | `string`  | NULLABLE     | Maximum compatible Alpine version (null = no upper bound)                                  |
+| `dockerInstructions`   | `text`    | NULLABLE     | Raw Dockerfile instruction block appended during image build. Supports `{{option.KEY}}` variable interpolation from resolved option values. |
+| `serviceName`          | `string`  | NULLABLE     | Name of the s6-overlay service (used as the directory name under `/etc/s6-overlay/s6-rc.d/`). Null for config-only features. |
+| `s6RunScript`          | `text`    | NULLABLE     | Content of the s6-overlay `run` script for this service. Supports `{{option.KEY}}` interpolation. |
+| `ports`                | `json`    | NOT NULL     | Array of port definitions exposed by this feature. Each entry: `{ name, port, type }` where `type` is `HTTP`, `HTTPS`, `WEBSOCKET`, or `CUSTOM`. |
+| `defaultEnv`           | `json`    | NOT NULL     | Default environment variables injected into the workspace at runtime. Supports `{{option.KEY}}` interpolation. |
+| `createdAt`            | `datetime`| NOT NULL     | Creation timestamp                                                                         |
+| `updatedAt`            | `datetime`| NOT NULL     | Last update timestamp                                                                      |
 
 **Relations:**
+- Has many `FeatureOption`
 - Has many `TemplateFeature`
 - Has many `ProjectFeature`
 
 ---
 
-## 8. Project
+## 8. FeatureOption
+
+Describes a single configurable option exposed by a feature. Options are resolved at template-feature assignment time (`TemplateFeature.optionValues`) and at workspace deployment time.
+
+| Field          | Type      | Constraints      | Description                                                                             |
+|----------------|-----------|------------------|-----------------------------------------------------------------------------------------|
+| `id`           | `uuid`    | PK               | Unique identifier                                                                       |
+| `featureId`    | `uuid`    | FK → Feature     | Parent feature                                                                          |
+| `key`          | `string`  | NOT NULL         | Machine-readable key used in `{{option.KEY}}` interpolation and in `optionValues` maps  |
+| `label`        | `string`  | NOT NULL         | Human-readable label shown in the UI                                                    |
+| `description`  | `string`  | NULLABLE         | Explanation of what this option controls                                                |
+| `type`         | `enum`    | NOT NULL         | `STRING`, `NUMBER`, `BOOLEAN`, `SELECT`                                                 |
+| `required`     | `boolean` | NOT NULL         | If true, a value must be provided — no fallback to `defaultValue`                       |
+| `defaultValue` | `string`  | NULLABLE         | Default value used when the option is not overridden. Null only when `required = true`  |
+| `selectValues` | `json`    | NULLABLE         | Allowed values for `SELECT` type (array of strings). Null for other types               |
+| `createdAt`    | `datetime`| NOT NULL         | Creation timestamp                                                                      |
+
+**Unique constraint:** (`featureId`, `key`)
+
+**Example options for a PostgreSQL feature:**
+```json
+[
+  { "key": "version",   "type": "SELECT",  "required": false, "defaultValue": "16", "selectValues": ["14","15","16"] },
+  { "key": "port",      "type": "NUMBER",  "required": false, "defaultValue": "5432" },
+  { "key": "db",        "type": "STRING",  "required": true,  "defaultValue": null },
+  { "key": "password",  "type": "STRING",  "required": true,  "defaultValue": null }
+]
+```
+
+---
+
+## 9. Project
 
 A project groups one or more Git repositories, a template, and a set of features. Users with the right access level can deploy workspaces from it.
 
@@ -203,7 +241,7 @@ A project groups one or more Git repositories, a template, and a set of features
 
 ---
 
-## 9. ProjectRepository
+## 10. ProjectRepository
 
 Links one or more Git repositories to a project. When a workspace is created, the listed repositories are cloned or mounted inside the container.
 
@@ -221,7 +259,7 @@ Links one or more Git repositories to a project. When a workspace is created, th
 
 ---
 
-## 10. ProjectFeature
+## 11. ProjectFeature
 
 Join table connecting a project to the features it uses.
 
@@ -234,7 +272,7 @@ Join table connecting a project to the features it uses.
 
 ---
 
-## 11. ProjectGroup
+## 12. ProjectGroup
 
 Defines which groups have access to a project and at what permission level. Access to a project is granted exclusively through group membership — individual user assignment is not supported. The project owner always retains full control regardless of group rules.
 
@@ -256,7 +294,7 @@ Defines which groups have access to a project and at what permission level. Acce
 
 ---
 
-## 12. DockerServerGroup
+## 13. DockerServerGroup
 
 Defines which groups have access to a Docker server. When a workspace is deployed, the platform collects all servers accessible to any group that has access to the project, then selects the most available one.
 
@@ -278,7 +316,7 @@ Defines which groups have access to a Docker server. When a workspace is deploye
 
 ---
 
-## 13. Workspace
+## 14. Workspace
 
 A running or stopped development environment. A workspace is tied to a project, a user, a specific branch, and a Docker server. It can be pinned to prevent automatic shutdown and deletion.
 
@@ -316,7 +354,7 @@ A running or stopped development environment. A workspace is tied to a project, 
 
 ---
 
-## 14. WorkspaceService
+## 15. WorkspaceService
 
 Describes an individual service exposed by a workspace (e.g. a web server, a terminal, a database port). Used by the UI to show users what is accessible and how.
 
