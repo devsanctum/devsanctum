@@ -25,6 +25,15 @@ This document defines the core tooling used in this project.
 ## Docker Management
 - **dockerode** is used to interact with Docker from the application code (container lifecycle, inspection, and runtime operations).
 
+## Workspace Container Base
+- All workspace containers use **Alpine Linux** as the base image to minimise size and attack surface.
+- **s6-overlay** is the default process supervisor bundled into every workspace image.
+  - Enables multi-service containers (e.g. app process + database sidecar) within a single container.
+  - Services are declared in `/etc/s6-overlay/s6-rc.d/` as part of the image build.
+  - Provides automatic process restart on failure.
+  - `s6-svc` CLI is available inside the container for manual service control.
+- Custom templates may extend the Alpine + s6-overlay base to add language runtimes, tools, or additional services.
+
 ## Reverse Proxy
 - **Traefik** is the reverse proxy data plane.
 - The backend TypeScript application acts as the control plane and drives Traefik at runtime via its REST API.
@@ -42,5 +51,6 @@ This document defines the core tooling used in this project.
 - Database: PostgreSQL
 - Frontend: React
 - Docker SDK: dockerode
+- Workspace base: Alpine + s6-overlay
 - Email: Nodemailer
 - Reverse Proxy: Traefik
