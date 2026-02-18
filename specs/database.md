@@ -21,6 +21,9 @@ This document describes the full relational data model for the platform. All tab
 13. [DockerServerGroup](#13-dockerservergroup)
 14. [Workspace](#14-workspace)
 15. [WorkspaceService](#15-workspaceservice)
+16. [Invitation](#16-invitation)
+17. [AuditLog](#17-auditlog)
+18. [PlatformConfig](#18-platformconfig)
 
 ---
 
@@ -37,6 +40,8 @@ Represents a registered user of the platform. Can own or be a member of projects
 | `provider`    | `enum`    | NOT NULL             | Auth provider: `LOCAL`, `GITHUB`, `GOOGLE` |
 | `providerId`  | `string`  | NULLABLE             | External provider user ID                |
 | `passwordHash`| `string`  | NULLABLE             | Hashed password (null for OAuth users)   |
+| `role`        | `enum`    | NOT NULL             | Platform role: `USER` or `ADMIN`         |
+| `isActive`    | `boolean` | NOT NULL, DEFAULT true | Whether the account is active. Deactivated users cannot log in. |
 | `createdAt`   | `datetime`| NOT NULL             | Account creation timestamp               |
 | `updatedAt`   | `datetime`| NOT NULL             | Last update timestamp                    |
 
@@ -224,6 +229,7 @@ A project groups one or more Git repositories, a template, and a set of features
 |---------------|-----------|-------------------|----------------------------------------------------------|
 | `id`          | `uuid`    | PK                | Unique identifier                                        |
 | `name`        | `string`  | NOT NULL          | Project name                                             |
+| `slug`        | `string`  | UNIQUE, NOT NULL  | URL-safe slug derived from the project name. Used as the first segment of workspace subdomains. Updated when the project is renamed. |
 | `description` | `string`  | NULLABLE          | Optional project description                             |
 | `ownerId`     | `uuid`    | FK → User         | The user who owns this project                           |
 | `templateId`  | `uuid`    | FK → Template     | Template used to provision workspace containers          |
@@ -330,9 +336,9 @@ A running or stopped development environment. A workspace is tied to a project, 
 | `containerId`    | `string`  | NULLABLE              | Docker container ID (set after provisioning)                                |
 | `branch`         | `string`  | NOT NULL              | Git branch this workspace is bound to                                       |
 | `status`         | `enum`    | NOT NULL              | `PENDING`, `STARTING`, `RUNNING`, `STOPPING`, `STOPPED`, `DESTROYED`       |
-| `visibility`     | `enum`    | NOT NULL              | `PUBLIC` or `PRIVATE`                                                       |
-| `routeDomain`    | `string`  | UNIQUE, NULLABLE      | Subdomain or domain assigned to this workspace for reverse-proxy routing    |
-| `pinned`         | `boolean` | NOT NULL, DEFAULT false | If true, the workspace is exempt from inactivity shutdown and auto-deletion |
+| `visibility`     | `enum`    | NOT NULL              | `PUBLIC` or `PRIVATE`                                                                                                                                                  |
+| `slug`           | `string`  | UNIQUE, NOT NULL      | Short unique slug generated at creation (e.g. `a3k9p`). Combined with the project slug to form the workspace manager subdomain: `<project-slug>-<workspace-slug>.<platform-domain>`. Never changes after creation. |
+| `pinned`         | `boolean` | NOT NULL, DEFAULT false | If true, the workspace is exempt from inactivity shutdown and auto-deletion                                                                                         |
 | `kept`           | `boolean` | NOT NULL, DEFAULT false | If true, the 7-day auto-destroy policy is suspended                        |
 | `lastActivityAt` | `datetime`| NOT NULL              | Timestamp of the last detected activity in the workspace                    |
 | `stopAt`         | `datetime`| NULLABLE              | Scheduled stop time (set to `lastActivityAt + 2h` if not pinned)           |
@@ -360,16 +366,78 @@ Describes an individual service exposed by a workspace (e.g. a web server, a ter
 
 | Field         | Type      | Constraints        | Description                                                  |
 |---------------|-----------|--------------------|--------------------------------------------------------------|
-| `id`          | `uuid`    | PK                 | Unique identifier                                            |
-| `workspaceId` | `uuid`    | FK → Workspace     | Parent workspace                                             |
-| `name`        | `string`  | NOT NULL           | Service label (e.g. "App", "Terminal", "Database")           |
-| `port`        | `int`     | NOT NULL           | Port exposed by the container                                |
-| `protocol`    | `enum`    | NOT NULL           | `HTTP`, `HTTPS`, `TCP`                                       |
-| `url`         | `string`  | NULLABLE           | Full reachable URL for this service (set after routing)      |
-| `createdAt`   | `datetime`| NOT NULL           | Creation timestamp                                           |
+| `id`          | `uuid`    | PK                 | Unique identifier                                                                                                                                                          |
+| `workspaceId` | `uuid`    | FK → Workspace     | Parent workspace                                                                                                                                                           |
+| `name`        | `string`  | NOT NULL           | Human-readable service label (e.g. `Frontend`, `API`, `Database UI`)                                                                                                      |
+| `slug`        | `string`  | NOT NULL           | URL-safe identifier used as the service segment in the subdomain: `<project-slug>-<workspace-slug>-<service-slug>.<platform-domain>`. Must be unique within a workspace. |
+| `port`        | `int`     | NOT NULL           | Container port this service maps to                                                                                                                                        |
+| `protocol`    | `enum`    | NOT NULL           | `HTTP`, `HTTPS`, `WEBSOCKET`, `TCP`                                                                                                                                        |
+| `url`         | `string`  | NULLABLE           | Full reachable URL for this service, set after routing is established (e.g. `https://my-app-a3k9p-frontend.devsanctum.io`)                                                |
+| `createdAt`   | `datetime`| NOT NULL           | Creation timestamp                                                                                                                                                         |
 
 **Relations:**
 - Belongs to `Workspace`
+
+**Unique constraint:** (`workspaceId`, `slug`)
+
+---
+
+## 16. Invitation
+
+Represents a pending or historical invitation sent by an admin to bring a new user onto the platform. Invitations are time-limited, single-use, and can be revoked before acceptance. Used when invitation-only registration mode is active.
+
+| Field         | Type      | Constraints          | Description                                                                     |
+|---------------|-----------|----------------------|---------------------------------------------------------------------------------|
+| `id`          | `uuid`    | PK                   | Unique identifier                                                               |
+| `email`       | `string`  | NOT NULL             | Email address of the invited person                                             |
+| `token`       | `string`  | UNIQUE, NOT NULL     | Secure random one-time token embedded in the invitation link                    |
+| `role`        | `enum`    | NOT NULL             | Intended platform role for the new account: `USER` or `ADMIN`                  |
+| `invitedById` | `uuid`    | FK → User            | Admin who sent the invitation                                                   |
+| `status`      | `enum`    | NOT NULL             | `PENDING`, `ACCEPTED`, `REVOKED`, `EXPIRED`                                     |
+| `expiresAt`   | `datetime`| NOT NULL             | Token expiry timestamp (default: 48 hours from creation)                        |
+| `acceptedAt`  | `datetime`| NULLABLE             | Timestamp when the invitation was accepted and the account was created          |
+| `createdAt`   | `datetime`| NOT NULL             | Invitation creation timestamp                                                   |
+
+**Relations:**
+- Belongs to `User` (as `invitedById`)
+
+---
+
+## 17. AuditLog
+
+Append-only record of significant platform events for security review, incident investigation, and compliance. Entries are never modified or deleted through the application.
+
+| Field        | Type      | Constraints          | Description                                                                                    |
+|--------------|-----------|----------------------|------------------------------------------------------------------------------------------------|
+| `id`         | `uuid`    | PK                   | Unique identifier                                                                              |
+| `actorId`    | `uuid`    | NULLABLE, FK → User  | User who performed the action. Null for system-initiated jobs (e.g. auto-stop, auto-destroy).  |
+| `actorRole`  | `string`  | NULLABLE             | Role of the actor at the time of the action (snapshot, as the role may change later)           |
+| `action`     | `string`  | NOT NULL             | Namespaced action key (e.g. `workspace.stopped`, `user.role_changed`, `project.deleted`)       |
+| `resource`   | `string`  | NOT NULL             | Resource type affected (e.g. `Workspace`, `User`, `Project`)                                   |
+| `resourceId` | `string`  | NULLABLE             | ID of the affected resource                                                                    |
+| `metadata`   | `json`    | NULLABLE             | Additional context: changed field diffs, request details, related IDs, etc.                   |
+| `ip`         | `string`  | NULLABLE             | IP address of the originating request                                                          |
+| `createdAt`  | `datetime`| NOT NULL             | Event timestamp                                                                                |
+
+**Relations:**
+- Belongs to `User` (as `actorId`, nullable)
+
+---
+
+## 18. PlatformConfig
+
+Key/value store for platform-wide configuration settings managed by administrators. Covers general settings, SMTP, OAuth providers, workspace lifecycle policies, and library source. Sensitive values (secrets, passwords) are stored encrypted at rest.
+
+| Field         | Type      | Constraints          | Description                                                                                          |
+|---------------|-----------|----------------------|------------------------------------------------------------------------------------------------------|
+| `key`         | `string`  | PK                   | Unique setting identifier (e.g. `registrationMode`, `smtpHost`, `githubClientSecret`)                |
+| `value`       | `text`    | NULLABLE             | Stored value as a string. Encrypted values contain ciphertext. Null for unset optional settings.     |
+| `encrypted`   | `boolean` | NOT NULL             | Whether the value is encrypted at rest                                                               |
+| `updatedAt`   | `datetime`| NOT NULL             | Timestamp of the last update                                                                         |
+| `updatedById` | `uuid`    | NULLABLE, FK → User  | Admin who last changed this setting. Null for seed defaults or system-applied values.                |
+
+**Relations:**
+- Belongs to `User` (as `updatedById`, nullable)
 
 ---
 
@@ -377,12 +445,14 @@ Describes an individual service exposed by a workspace (e.g. a web server, a ter
 
 ```
 User ──< GroupMember >── Group ──< ProjectGroup >── Project ──< ProjectRepository
-                           │                            │
-                  DockerServerGroup              ProjectFeature >── Feature
-                           │                            │
-                     DockerServer                  Template
-                           │                            │
-                    (server pool)               Workspace ──< WorkspaceService
+  │                        │                            │
+  │               DockerServerGroup              ProjectFeature >── Feature
+  │                        │                            │
+  ├──< Invitation     DockerServer                  Template
+  │                        │                            │
+  └──< AuditLog       (server pool)               Workspace ──< WorkspaceService
+
+PlatformConfig (global key/value store, standalone)
 ```
 
 ## Access Control Summary
