@@ -1,0 +1,53 @@
+{
+  "$schema": "https://raw.githubusercontent.com/devsanctum/devsanctum/main/library/schemas/feature.schema.json",
+  "id": "vscode-server",
+  "version": "1.0.0",
+  "name": "VS Code Server",
+  "description": "Browser-accessible VS Code editor (code-server) running inside the workspace container. Provides a full IDE experience directly from any browser without local installation.",
+  "apkPackages": ["nodejs", "npm"],
+  "alpineMinVersion": "3.18",
+  "alpineMaxVersion": null,
+  "dockerInstructions": "RUN npm install -g code-server@{{option.version}} --unsafe-perm\nRUN mkdir -p {{option.workspace_dir}}",
+  "serviceName": "vscode-server",
+  "s6RunScript": "#!/bin/sh -e\nexec code-server \\\n  --bind-addr 0.0.0.0:{{option.port}} \\\n  --auth none \\\n  {{option.workspace_dir}}",
+  "ports": [
+    {
+      "name": "VS Code",
+      "port": 8080,
+      "type": "HTTP"
+    }
+  ],
+  "defaultEnv": {
+    "VSCODE_PORT": "{{option.port}}",
+    "WORKSPACE_DIR": "{{option.workspace_dir}}"
+  },
+  "options": [
+    {
+      "key": "version",
+      "label": "code-server version",
+      "description": "The npm version tag to install (e.g. latest, 4.22.0).",
+      "type": "STRING",
+      "required": false,
+      "defaultValue": "latest",
+      "selectValues": null
+    },
+    {
+      "key": "port",
+      "label": "Listening port",
+      "description": "Port on which code-server will listen inside the container.",
+      "type": "NUMBER",
+      "required": false,
+      "defaultValue": "8080",
+      "selectValues": null
+    },
+    {
+      "key": "workspace_dir",
+      "label": "Workspace directory",
+      "description": "Initial directory opened in code-server when the editor starts.",
+      "type": "STRING",
+      "required": false,
+      "defaultValue": "/workspace",
+      "selectValues": null
+    }
+  ]
+}

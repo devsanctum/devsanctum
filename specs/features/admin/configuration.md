@@ -56,6 +56,14 @@ Global defaults for workspace lifecycle management.
 | `inactivityStopMinutes`    | number  | Minutes of inactivity before a non-pinned workspace is stopped (default: 120) |
 | `autoDestroyDays`          | number  | Days before a non-pinned, non-kept workspace is destroyed (default: 7) |
 
+### 5. Library
+Settings for the online template and feature library.
+
+| Setting              | Type    | Description                                                                          |
+|----------------------|---------|--------------------------------------------------------------------------------------|
+| `libraryUrl`         | string  | Base URL of the library repository (default: `https://raw.githubusercontent.com/devsanctum/devsanctum/main/library`) |
+| `libraryAutoRefresh` | boolean | If true, the library index is refreshed on platform startup (default: `true`)        |
+
 ---
 
 ## Use Cases
@@ -81,12 +89,18 @@ The admin changes the inactivity threshold or auto-destroy window. Changes apply
 ### UC-7: Send a test email
 From the SMTP configuration form, the admin sends a test email to their own address without leaving the form.
 
+### UC-8: Configure the library source URL
+The admin replaces the default library URL with a custom one (e.g. an internal Git mirror). A **Test URL** button validates that the index is reachable before saving.
+
+### UC-9: Reset library URL to default
+The admin clicks **Reset to default** to restore the official DevSanctum library URL.
+
 ---
 
 ## UI/UX
 
 ### Configuration Page (`/admin/configuration`)
-- Sidebar or tab navigation between sections: **General**, **Email**, **OAuth Providers**, **Workspace Policies**.
+- Sidebar or tab navigation between sections: **General**, **Email**, **OAuth Providers**, **Workspace Policies**, **Library**.
 - Each section is a card with a form. CTA: **Save changes** (per section, not global).
 - Unsaved changes indicator: section tab shows a dot when there are pending changes.
 
@@ -111,3 +125,10 @@ From the SMTP configuration form, the admin sends a test email to their own addr
 - Two numeric inputs with unit labels (minutes, days).
 - Current policy summary shown below: "Workspaces stop after **120 minutes** of inactivity and are destroyed after **7 days** unless kept or pinned."
 - Changes trigger a confirmation: "This will affect all future lifecycle timer evaluations."
+
+#### Library Section
+- **Library URL** — text input pre-filled with the default GitHub raw URL.
+- **Test URL** button — fetches `{url}/templates/index.json` and reports reachability.
+- **Reset to default** link below the input.
+- **Auto-refresh on startup** toggle.
+- Link: "Browse library →" navigates to `/admin/library`.

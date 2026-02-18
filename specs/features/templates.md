@@ -29,7 +29,10 @@ An admin updates an existing template. Changes apply to future workspace provisi
 An admin deletes a template. Deletion is blocked if any project currently references it. The admin must re-assign those projects first.
 
 ### UC-5: Preview a template
-A user can view the full details of a template (image, ports, env vars) before selecting it for a project.
+A user can view the full details of a template (Alpine version, packages, features, ports, env vars) before selecting it for a project.
+
+### UC-6: Import a template from the online library
+An admin opens the library browser (`/admin/library`), finds a template, and clicks **Import**. The platform downloads the JSON definition, resolves any required features (importing them first if absent locally), and creates a new local template ready for review. See `specs/features/library.md` for the full import flow.
 
 ---
 

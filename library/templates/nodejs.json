@@ -1,0 +1,44 @@
+{
+  "$schema": "https://raw.githubusercontent.com/devsanctum/devsanctum/main/library/schemas/template.schema.json",
+  "id": "nodejs",
+  "version": "1.0.0",
+  "name": "Node.js",
+  "description": "Node.js development environment built on Alpine Linux with npm, git, and a browser-accessible VS Code editor. Suitable for any Node.js, TypeScript, or JavaScript project.",
+  "alpineMajorVersion": 3,
+  "alpineMinorVersion": 21,
+  "apkPackages": [
+    "nodejs",
+    "npm",
+    "git",
+    "curl",
+    "bash",
+    "openssh-client"
+  ],
+  "sharedFolders": [],
+  "dockerInstructions": "RUN npm install -g typescript tsx",
+  "ports": [
+    {
+      "name": "App",
+      "port": 3000,
+      "type": "HTTP"
+    },
+    {
+      "name": "Dev server (Vite / HMR)",
+      "port": 5173,
+      "type": "HTTP"
+    }
+  ],
+  "defaultEnv": {
+    "NODE_ENV": "development",
+    "PATH": "/workspace/node_modules/.bin:$PATH"
+  },
+  "features": [
+    {
+      "featureId": "vscode-server",
+      "optionValues": {
+        "port": "8080",
+        "workspace_dir": "/workspace"
+      }
+    }
+  ]
+}
