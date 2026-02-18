@@ -35,8 +35,8 @@ The platform periodically polls each `ONLINE` Docker server via dockerode to col
 
 Metrics are stored on the `DockerServer` record and updated at each polling interval. A `resourcesUpdatedAt` timestamp tracks data freshness. If a server becomes unreachable, its resource data is preserved but shown as stale.
 
-### UC-8: Assign Docker servers to a project
-A project manager assigns one or more registered Docker servers to a project. When deploying a workspace, the platform automatically picks the assigned server with the greatest available RAM (or lowest CPU pressure) to balance load across the pool.
+### UC-8: Assign Docker servers to groups
+An admin assigns one or more registered Docker servers to one or more groups. When a workspace is deployed, the platform collects all servers accessible to any group that has access to the project, then selects the most available server (by free RAM) from that pool. This ensures resources are shared at the group level without requiring per-project server configuration.
 
 ---
 
@@ -75,6 +75,7 @@ Clickable from any row in the list. Shows:
   - RAM usage bar with exact values (used / total).
   - Disk usage bar with exact values (used / free / total).
 - Last polled timestamp with a **Refresh now** button.
+- **Groups** section: list of groups this server is assigned to, with an **Unassign** button per row and an **Assign to group** dropdown.
 - List of workspaces currently running on this server (name, project, user, status).
 
 ### Connectivity Test Feedback

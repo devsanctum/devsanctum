@@ -7,16 +7,18 @@ This document describes the full relational data model for the platform. All tab
 ## Table Index
 
 1. [User](#1-user)
-2. [DockerServer](#2-dockerserver)
-3. [Template](#3-template)
-4. [Feature](#4-feature)
-5. [Project](#5-project)
-6. [ProjectRepository](#6-projectrepository)
-7. [ProjectFeature](#7-projectfeature)
-8. [ProjectDockerServer](#8-projectdockerserver)
-9. [ProjectMember](#9-projectmember)
-10. [Workspace](#10-workspace)
-11. [WorkspaceService](#11-workspaceservice)
+2. [Group](#2-group)
+3. [GroupMember](#3-groupmember)
+4. [DockerServer](#4-dockerserver)
+5. [Template](#5-template)
+6. [Feature](#6-feature)
+7. [Project](#7-project)
+8. [ProjectRepository](#8-projectrepository)
+9. [ProjectFeature](#9-projectfeature)
+10. [ProjectGroup](#10-projectgroup)
+11. [DockerServerGroup](#11-dockerservergroup)
+12. [Workspace](#12-workspace)
+13. [WorkspaceService](#13-workspaceservice)
 
 ---
 
@@ -38,12 +40,46 @@ Represents a registered user of the platform. Can own or be a member of projects
 
 **Relations:**
 - Has many `Project` (as owner)
-- Has many `ProjectMember`
+- Has many `GroupMember`
 - Has many `Workspace`
 
 ---
 
-## 2. DockerServer
+## 2. Group
+
+A group is an organizational unit that aggregates users. Access to projects and Docker servers is granted at the group level, not per individual user. A user may belong to multiple groups.
+
+| Field         | Type      | Constraints      | Description                                      |
+|---------------|-----------|------------------|--------------------------------------------------|
+| `id`          | `uuid`    | PK               | Unique identifier                                |
+| `name`        | `string`  | UNIQUE, NOT NULL | Group display name                               |
+| `description` | `string`  | NULLABLE         | Optional description of the group's purpose      |
+| `createdAt`   | `datetime`| NOT NULL         | Creation timestamp                               |
+| `updatedAt`   | `datetime`| NOT NULL         | Last update timestamp                            |
+
+**Relations:**
+- Has many `GroupMember`
+- Has many `ProjectGroup`
+- Has many `DockerServerGroup`
+
+---
+
+## 3. GroupMember
+
+Join table linking users to groups. A user can belong to multiple groups. A group member can have a role within the group.
+
+| Field       | Type      | Constraints      | Description                                                       |
+|-------------|-----------|------------------|-------------------------------------------------------------------|
+| `groupId`   | `uuid`    | FK → Group       | Referenced group                                                  |
+| `userId`    | `uuid`    | FK → User        | Referenced user                                                   |
+| `role`      | `enum`    | NOT NULL         | `MEMBER` — standard access; `MANAGER` — can add/remove members   |
+| `createdAt` | `datetime`| NOT NULL         | Membership creation timestamp                                     |
+
+**Primary key:** composite (`groupId`, `userId`)
+
+---
+
+## 4. DockerServer
 
 Represents a Docker host that the platform can connect to in order to provision containers. Multiple servers can be registered.
 
@@ -70,12 +106,12 @@ Represents a Docker host that the platform can connect to in order to provision 
 **Resource polling:** The platform polls each `ONLINE` server on a configurable interval (default: 60 seconds) using dockerode to refresh CPU, RAM, and disk metrics. If a server becomes unreachable, `status` is updated and polling is suspended until it recovers.
 
 **Relations:**
-- Has many `ProjectDockerServer`
+- Has many `DockerServerGroup`
 - Has many `Workspace`
 
 ---
 
-## 3. Template
+## 5. Template
 
 Defines a reusable environment blueprint. A template describes what base Docker image and default configuration to use when creating a workspace container.
 
@@ -96,7 +132,7 @@ Defines a reusable environment blueprint. A template describes what base Docker 
 
 ---
 
-## 4. Feature
+## 6. Feature
 
 Represents an optional add-on that can be attached to a project (e.g. a database sidecar, a cache service, a tool like pgAdmin). Each feature may spin up a companion container or only inject environment configuration.
 
@@ -116,7 +152,7 @@ Represents an optional add-on that can be attached to a project (e.g. a database
 
 ---
 
-## 5. Project
+## 7. Project
 
 A project groups one or more Git repositories, a template, and a set of features. Users with the right access level can deploy workspaces from it.
 
@@ -136,13 +172,12 @@ A project groups one or more Git repositories, a template, and a set of features
 - Belongs to `Template`
 - Has many `ProjectRepository`
 - Has many `ProjectFeature`
-- Has many `ProjectDockerServer`
-- Has many `ProjectMember`
+- Has many `ProjectGroup`
 - Has many `Workspace`
 
 ---
 
-## 6. ProjectRepository
+## 8. ProjectRepository
 
 Links one or more Git repositories to a project. When a workspace is created, the listed repositories are cloned or mounted inside the container.
 
@@ -160,7 +195,7 @@ Links one or more Git repositories to a project. When a workspace is created, th
 
 ---
 
-## 7. ProjectFeature
+## 9. ProjectFeature
 
 Join table connecting a project to the features it uses.
 
@@ -173,47 +208,51 @@ Join table connecting a project to the features it uses.
 
 ---
 
-## 8. ProjectDockerServer
+## 10. ProjectGroup
 
-Join table assigning one or more Docker servers to a project. When a workspace is deployed, the platform selects the most available server from this pool using live resource metrics.
+Defines which groups have access to a project and at what permission level. Access to a project is granted exclusively through group membership — individual user assignment is not supported. The project owner always retains full control regardless of group rules.
 
-| Field           | Type   | Constraints         | Description                                                              |
-|-----------------|--------|---------------------|--------------------------------------------------------------------------|
-| `projectId`     | `uuid` | FK → Project        | Referenced project                                                       |
-| `dockerServerId`| `uuid` | FK → DockerServer   | Referenced Docker server                                                 |
+| Field       | Type      | Constraints    | Description                                                   |
+|-------------|-----------|----------------|---------------------------------------------------------------|
+| `projectId` | `uuid`    | FK → Project   | Referenced project                                            |
+| `groupId`   | `uuid`    | FK → Group     | Referenced group                                              |
+| `role`      | `enum`    | NOT NULL       | `READ`, `DEPLOY`, `MANAGE`                                    |
+| `createdAt` | `datetime`| NOT NULL       | Assignment creation timestamp                                 |
 
-**Primary key:** composite (`projectId`, `dockerServerId`)
+**Primary key:** composite (`projectId`, `groupId`)
 
-**Server selection logic at workspace deployment:**
-1. Collect all `ONLINE` servers assigned to the project via this table.
-2. Rank by available RAM (`ramTotalMb - ramUsedMb`) descending.
-3. Assign the workspace to the server with the most free RAM.
-4. If all assigned servers are offline or unreachable, deployment fails with an actionable error.
-
----
-
-## 9. ProjectMember
-
-Defines access control for users on a project. The owner is not stored here — membership applies to non-owner users only.
-
-| Field       | Type      | Constraints    | Description                                                |
-|-------------|-----------|----------------|------------------------------------------------------------|
-| `id`        | `uuid`    | PK             | Unique identifier                                          |
-| `projectId` | `uuid`    | FK → Project   | Referenced project                                         |
-| `userId`    | `uuid`    | FK → User      | Referenced user                                            |
-| `role`      | `enum`    | NOT NULL       | `READ`, `DEPLOY`, `MANAGE`                                 |
-| `createdAt` | `datetime`| NOT NULL       | Membership creation timestamp                              |
+**Access resolution:** A user's effective role on a project is the highest role across all groups they belong to that are assigned to that project.
 
 **Roles:**
-- `READ` — can view the project and its workspaces.
-- `DEPLOY` — can also create and manage their own workspaces.
-- `MANAGE` — can also manage members, repositories, and project settings.
-
-**Unique constraint:** (`projectId`, `userId`)
+- `READ` — members of this group can view the project and its workspaces.
+- `DEPLOY` — members can also create and manage their own workspaces.
+- `MANAGE` — members can also edit project settings and manage group assignments.
 
 ---
 
-## 10. Workspace
+## 11. DockerServerGroup
+
+Defines which groups have access to a Docker server. When a workspace is deployed, the platform collects all servers accessible to any group that has access to the project, then selects the most available one.
+
+| Field           | Type      | Constraints         | Description                          |
+|-----------------|-----------|---------------------|--------------------------------------|
+| `dockerServerId`| `uuid`    | FK → DockerServer   | Referenced Docker server             |
+| `groupId`       | `uuid`    | FK → Group          | Referenced group                     |
+| `createdAt`     | `datetime`| NOT NULL            | Assignment creation timestamp        |
+
+**Primary key:** composite (`dockerServerId`, `groupId`)
+
+**Server selection logic at workspace deployment:**
+1. Collect all groups that have access to the project (via `ProjectGroup`).
+2. Collect all `ONLINE` Docker servers assigned to those groups (via `DockerServerGroup`).
+3. Deduplicate the server pool.
+4. Rank by available RAM (`ramTotalMb - ramUsedMb`) descending.
+5. Assign the workspace to the server with the most free RAM.
+6. If no eligible server is available, deployment fails with an actionable error.
+
+---
+
+## 12. Workspace
 
 A running or stopped development environment. A workspace is tied to a project, a user, a specific branch, and a Docker server. It can be pinned to prevent automatic shutdown and deletion.
 
@@ -251,7 +290,7 @@ A running or stopped development environment. A workspace is tied to a project, 
 
 ---
 
-## 11. WorkspaceService
+## 13. WorkspaceService
 
 Describes an individual service exposed by a workspace (e.g. a web server, a terminal, a database port). Used by the UI to show users what is accessible and how.
 
@@ -273,26 +312,24 @@ Describes an individual service exposed by a workspace (e.g. a web server, a ter
 ## Entity Relationship Overview
 
 ```
-User ──< ProjectMember >── Project ──< ProjectRepository
-                              │
-                         Template
-                              │
-                         ProjectFeature >── Feature
-                              │
-                         ProjectDockerServer >── DockerServer
-                              │
-                         Workspace ──< WorkspaceService
-                              │
-                      (selected DockerServer)
+User ──< GroupMember >── Group ──< ProjectGroup >── Project ──< ProjectRepository
+                           │                            │
+                  DockerServerGroup              ProjectFeature >── Feature
+                           │                            │
+                     DockerServer                  Template
+                           │                            │
+                    (server pool)               Workspace ──< WorkspaceService
 ```
 
 ## Access Control Summary
 
-| Action                        | READ | DEPLOY | MANAGE | OWNER |
-|-------------------------------|------|--------|--------|-------|
-| View project                  | ✅   | ✅     | ✅     | ✅    |
-| Deploy workspace              | ❌   | ✅     | ✅     | ✅    |
-| Manage own workspace          | ❌   | ✅     | ✅     | ✅    |
-| Manage members                | ❌   | ❌     | ✅     | ✅    |
-| Edit project settings         | ❌   | ❌     | ✅     | ✅    |
-| Delete project                | ❌   | ❌     | ❌     | ✅    |
+Access is resolved through group membership. A user's effective role on a project is the highest role across all `ProjectGroup` entries for groups they belong to.
+
+| Action                              | READ | DEPLOY | MANAGE | OWNER |
+|-------------------------------------|------|--------|--------|-------|
+| View project                        | ✅   | ✅     | ✅     | ✅    |
+| Deploy workspace                    | ❌   | ✅     | ✅     | ✅    |
+| Manage own workspace                | ❌   | ✅     | ✅     | ✅    |
+| Edit project settings               | ❌   | ❌     | ✅     | ✅    |
+| Manage group assignments on project | ❌   | ❌     | ✅     | ✅    |
+| Delete project                      | ❌   | ❌     | ❌     | ✅    |
