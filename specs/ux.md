@@ -266,3 +266,59 @@ Use a step indicator for flows with 3+ steps:
 - Empty state copy explains **why** it is empty and **what to do**: *"No workspaces yet. Deploy one to get started."*
 - Confirmation dialogs state the **consequence**, not a vague question: *"This will permanently delete all data in this workspace."*
 - Avoid jargon. Prefer *"stopped"* over *"terminated"*, *"connecting"* over *"initialising tunnel"*.
+
+---
+
+## 12. Page Specification Conventions
+
+### One page, one file
+
+Every distinct page in the application has exactly one specification file in `specs/pages/`. No two pages share a spec file. A "page" is any route that renders a full-screen view — not a modal, drawer, or nested component.
+
+### File naming
+
+Use the primary route segment as the filename:
+
+| Route | Spec file |
+|-------|-----------|
+| `/` (public) | `specs/pages/home.md` |
+| `/dashboard` | `specs/pages/dashboard.md` |
+| `/login` | `specs/pages/login.md` |
+| `/projects/:id` | `specs/pages/project-detail.md` |
+| `/admin/users` | `specs/pages/admin-users.md` |
+
+Use kebab-case. Admin sub-pages are prefixed with `admin-`.
+
+### Required sections in every page spec
+
+Each file must contain all of the following sections, in order:
+
+```
+## 1. Overview
+   - Auth requirement (unauthenticated / any authenticated user / admin only)
+   - Redirect behaviour when auth condition is not met
+   - Primary goal of the page (one sentence)
+
+## 2. Layout
+   - ASCII diagram showing the overall structure
+   - Named regions (header, sidebar, main, footer…)
+
+## 3–N. Sections
+   One section per distinct UI region.
+   Each section includes:
+   - Purpose (one sentence)
+   - Content description (fields, cards, lists…)
+   - Empty state
+   - Error state
+
+## N+1. API Endpoints
+   A table: Call | Endpoint | Auth | Notes
+
+## N+2. UX Notes
+   Anything that does not fit above:
+   polling intervals, optimistic update rules, cross-section dependencies…
+```
+
+### Scope
+
+Page specs describe **what** the UI shows and **what data it needs** — not implementation details. Do not include React component names, CSS classes, or state management internals in a page spec.

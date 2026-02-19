@@ -45,6 +45,7 @@ All project specifications are located in the [`specs/`](specs/) folder.
 | [`specs/theming.md`](specs/theming.md) | Color palette, design tokens, dark mode plan, contrast ratios |
 | [`specs/features/ui-components.md`](specs/features/ui-components.md) | Primer React component usage reference by use case |
 | [`specs/features/`](specs/features/) | Feature specifications with use cases and UI/UX |
+| [`specs/pages/`](specs/pages/) | Page-level specs: layout, sections, API calls, UX rules per route |
 | [`specs/features/admin/`](specs/features/admin/) | Administration panel features |
 
 ## Library
