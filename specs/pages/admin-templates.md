@@ -77,6 +77,7 @@ Each **template card**:
 ```
 ┌──────────────────────────────────────┐
 │  Template name            [Edit] [⋯] │
+│  Extends: Node.js base  (if child)   │
 │  Alpine 3.19  ·  4 features          │
 │                                      │
 │  Short description (1-line clamp).   │
@@ -92,8 +93,9 @@ Each **template card**:
 | **Template name** | `Text`, semibold, links to the template edit form. |
 | **Edit** | `Button`, `variant="invisible"`, `size="small"`, navigates to `/admin/templates/:id/edit`. |
 | **⋯ menu** | `ActionMenu` with a single **Delete** item (`variant="danger"`). |
+| **Extends badge** | `Label`, secondary: `"Extends › Parent name"` — shown only when the template has a parent. Clicking it navigates to the parent template's edit form. Hidden for root templates. |
 | **Alpine badge** | `Label`, secondary: `"Alpine 3.x"`. |
-| **Feature count** | Plain `Text`, `fg.muted`: `"N features"`. |
+| **Feature count** | Plain `Text`, `fg.muted`: `"N features"` (effective count, including inherited). |
 | **Description** | `Text`, `fg.muted`, 1-line clamp. Hidden if empty. |
 | **Feature badges** | Up to 4 `Label` components showing active feature names. `"+N more"` text if exceeded. |
 | **Project count** | `CounterLabel` at card bottom: `"Used by N project(s)"`. Muted when 0. |
@@ -187,7 +189,7 @@ At the bottom of the drawer, a dimmed line:
 
 Initiated from the **⋯ → Delete** action on a card.
 
-### 6.1 Safe delete (0 projects)
+### 6.1 Safe delete (0 projects, 0 children)
 
 `Dialog` confirmation:
 
@@ -200,9 +202,9 @@ This template is not used by any project. Deleting it is permanent.
 
 **Delete template**: `Button`, `variant="danger"`. On confirm, `DELETE /api/v1/templates/:id`. On success, card is removed from the grid with a fade-out animation. `Flash variant="success"`: `"Template deleted."` (auto-dismisses 5 s).
 
-### 6.2 Blocked delete (projects exist)
+### 6.2 Blocked — projects exist
 
-If the template is referenced by one or more projects, the confirmation dialog is replaced by a guard dialog:
+If the template is referenced by one or more projects, the confirmation is replaced by a guard dialog:
 
 ```
 Cannot delete "Node.js"
@@ -218,14 +220,31 @@ This template is used by 3 project(s). Reassign them to another template before 
 - Project names are links to `/projects/:id`.
 - No destructive action is offered — only **Close**.
 
+### 6.3 Blocked — child templates exist
+
+If the template is used as a parent by other templates, a separate guard dialog is shown (takes priority over the projects check):
+
+```
+Cannot delete "Alpine base"
+This template is extended by 2 child template(s). Delete or re-parent them before deleting this one.
+
+  · Node.js  →
+  · Python   →
+
+                                              [ Close ]
+```
+
+- Child template names link to their respective edit forms.
+- No destructive action is offered.
+
 ---
 
 ## 7. API Endpoints
 
 | Action | Endpoint | Notes |
 |--------|----------|-------|
-| Load templates | `GET /api/v1/templates` | Returns list with project count per template. |
-| Delete template | `DELETE /api/v1/templates/:id` | Returns 409 if projects exist (includes project list). |
+| Load templates | `GET /api/v1/templates` | Returns list with project count, child count, and parent name per template. |
+| Delete template | `DELETE /api/v1/templates/:id` | Returns 409 if projects exist or child templates exist (includes affected list). |
 | Fetch library index | `GET /api/v1/library/templates` | Proxied by backend from the configured library URL. |
 | Import library template | `POST /api/v1/library/templates/:libraryId/import` | Returns the new local template `id`. |
 

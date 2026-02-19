@@ -14,16 +14,17 @@ This document describes the full relational data model for the platform. All tab
 6. [TemplateFeature](#6-templatefeature)
 7. [Feature](#7-feature)
 8. [FeatureOption](#8-featureoption)
-9. [Project](#9-project)
-10. [ProjectRepository](#10-projectrepository)
-11. [ProjectFeature](#11-projectfeature)
-12. [ProjectGroup](#12-projectgroup)
-13. [DockerServerGroup](#13-dockerservergroup)
-14. [Workspace](#14-workspace)
-15. [WorkspaceService](#15-workspaceservice)
-16. [Invitation](#16-invitation)
-17. [AuditLog](#17-auditlog)
-18. [PlatformConfig](#18-platformconfig)
+9. [FeatureDependency](#9-featuredependency)
+10. [Project](#10-project)
+11. [ProjectRepository](#11-projectrepository)
+12. [ProjectFeature](#12-projectfeature)
+13. [ProjectGroup](#13-projectgroup)
+14. [DockerServerGroup](#14-dockerservergroup)
+15. [Workspace](#15-workspace)
+16. [WorkspaceService](#16-workspaceservice)
+17. [Invitation](#17-invitation)
+18. [AuditLog](#18-auditlog)
+19. [PlatformConfig](#19-platformconfig)
 
 ---
 
@@ -120,29 +121,43 @@ Represents a Docker host that the platform can connect to in order to provision 
 
 ## 5. Template
 
-Defines a reusable environment blueprint. A template describes the Alpine base image version, the list of APT packages to install, shared folder mounts, optional raw Dockerfile instructions, exposed ports, default environment variables, and the set of features (with their options) to activate. All workspace containers built from this template share this configuration.
+Defines a reusable environment blueprint. A template describes the Alpine base image version, the list of APK packages to install, shared folder mounts, optional raw Dockerfile instructions, exposed ports, default environment variables, and the set of features (with their options) to activate. All workspace containers built from this template share this configuration.
+
+A template may optionally extend a **parent template**, inheriting and merging all of the parent's configuration. Only one level of inheritance is allowed (a child cannot itself be a parent).
 
 | Field                 | Type      | Constraints  | Description                                                                                      |
 |-----------------------|-----------|--------------|--------------------------------------------------------------------------------------------------|
 | `id`                  | `uuid`    | PK           | Unique identifier                                                                                |
 | `name`                | `string`  | NOT NULL     | Template name (e.g. "Node.js 20", "Python 3.12")                                                 |
 | `description`         | `string`  | NULLABLE     | Short description of the environment                                                             |
-| `alpineMajor`         | `int`     | NOT NULL     | Alpine Linux major version (e.g. `3`)                                                            |
-| `alpineMinor`         | `int`     | NOT NULL     | Alpine Linux minor version (e.g. `19`)                                                           |
-| `apkPackages`         | `json`    | NOT NULL     | Ordered list of APK package names to install at build time (e.g. `["nodejs", "npm", "git"]`)     |
-| `sharedFolders`       | `json`    | NOT NULL     | List of absolute paths to mount as shared volumes across all workspaces (e.g. `["/home/user"]`)  |
-| `dockerInstructions`  | `text`    | NULLABLE     | Raw Dockerfile instructions appended after the base setup (e.g. `RUN`, `COPY`, `ENV` directives) |
-| `defaultPorts`        | `json`    | NOT NULL     | Array of default exposed ports and their protocols. Each entry: `{ name, port, type, isPublic }` where `isPublic` (boolean, default `false`) controls whether the port is shown to unauthenticated visitors on the public project page. |
-| `defaultEnv`          | `json`    | NOT NULL     | Default environment variables injected into every workspace container (key/value pairs)          |
-| `startCommand`        | `string`  | NULLABLE     | Override the s6-overlay entrypoint command if needed                                             |
-| `minRamMb`            | `int`     | NOT NULL, DEFAULT 256 | Minimum RAM in megabytes required to deploy a workspace from this template. Used during Docker server selection. |
-| `minDiskGb`           | `float`   | NOT NULL, DEFAULT 1.0 | Minimum free disk space in gigabytes required on the target Docker server.                |
+| `parentId`            | `uuid`    | NULLABLE, FK → Template (self) | Parent template this one extends. Null for root templates. Circular references are rejected. A template that has children cannot be used as a child itself. |
+| `alpineMajor`         | `int`     | NOT NULL     | Alpine Linux major version (e.g. `3`). Overrides the parent value when set.                      |
+| `alpineMinor`         | `int`     | NOT NULL     | Alpine Linux minor version (e.g. `19`). Overrides the parent value when set.                     |
+| `apkPackages`         | `json`    | NOT NULL     | Ordered list of APK package names added by **this** template. Merged with parent packages at build time (parent packages first). |
+| `sharedFolders`       | `json`    | NOT NULL     | Absolute paths added by this template. Merged with parent shared folders.                        |
+| `dockerInstructions`  | `text`    | NULLABLE     | Raw Dockerfile instructions contributed by this template. Appended after the parent's instructions. |
+| `defaultPorts`        | `json`    | NOT NULL     | Ports added or overridden by this template. Merged with parent ports; same-port entries here win. |
+| `defaultEnv`          | `json`    | NOT NULL     | Environment variables added or overridden by this template. Merged with parent env; child values win on conflict. |
+| `startCommand`        | `string`  | NULLABLE     | Overrides the parent's start command when set.                                                   |
+| `minRamMb`            | `int`     | NOT NULL, DEFAULT 256 | Minimum RAM in megabytes. Effective value: `max(parent.minRamMb, this.minRamMb)`.       |
+| `minDiskGb`           | `float`   | NOT NULL, DEFAULT 1.0 | Minimum free disk space in gigabytes. Effective value: `max(parent.minDiskGb, this.minDiskGb)`. |
 | `createdAt`           | `datetime`| NOT NULL     | Creation timestamp                                                                               |
 | `updatedAt`           | `datetime`| NOT NULL     | Last update timestamp                                                                            |
 
 **Relations:**
+- Optionally belongs to `Template` (as `parentId` — the parent template)
+- Has many `Template` (child templates that extend this one)
 - Has many `Project`
 - Has many `TemplateFeature`
+
+**Inheritance resolution rules (at workspace build time):**
+1. Start from the parent template's resolved configuration (or empty if root).
+2. Merge the child's `apkPackages`, `sharedFolders`, and `defaultPorts` (child entries appended / overriding on port conflict).
+3. Append the child's `dockerInstructions` after the parent's.
+4. Merge `defaultEnv` (child keys override parent keys).
+5. Use the child's `startCommand` if set, otherwise fall back to the parent's.
+6. Merge `TemplateFeature` rows (child overrides parent option values for the same feature).
+7. The effective `minRamMb` and `minDiskGb` are the max of parent and child values.
 
 ---
 
@@ -196,6 +211,8 @@ During workspace deployment, only Docker servers with `(ramTotalMb - ramUsedMb) 
 
 **Relations:**
 - Has many `FeatureOption`
+- Has many `FeatureDependency` (as the dependent feature — `featureId`)
+- Has many `FeatureDependency` (as the required feature — `requiredFeatureId`)
 - Has many `TemplateFeature`
 - Has many `ProjectFeature`
 
@@ -232,7 +249,29 @@ Describes a single configurable option exposed by a feature. Options are resolve
 
 ---
 
-## 9. Project
+## 9. FeatureDependency
+
+Records a required-feature relationship between two features. When feature A declares that it requires feature B, a row `(featureId=A, requiredFeatureId=B)` exists here. The platform resolves the full transitive closure of dependencies at activation time to ensure every required feature is included.
+
+| Field                | Type   | Constraints           | Description                                             |
+|----------------------|--------|-----------------------|---------------------------------------------------------|
+| `featureId`          | `uuid` | FK → Feature          | The feature that has the dependency                     |
+| `requiredFeatureId`  | `uuid` | FK → Feature          | The feature that must be co-activated                   |
+
+**Primary key:** composite (`featureId`, `requiredFeatureId`)
+
+**Constraints:**
+- `featureId ≠ requiredFeatureId` — a feature cannot depend on itself.
+- No circular chains — validated at insert time by traversing the existing dependency graph.
+
+**Dependency resolution (at template/project activation):**
+1. Starting from the set of explicitly selected features, collect all `requiredFeatureId` entries for each.
+2. Repeat recursively until the set is stable (transitive closure).
+3. Add any missing features to the activation set and notify the user which features were auto-included.
+
+---
+
+## 10. Project
 
 A project groups one or more Git repositories, a template, and a set of features. Users with the right access level can deploy workspaces from it.
 
@@ -261,7 +300,7 @@ A project groups one or more Git repositories, a template, and a set of features
 
 ---
 
-## 10. ProjectRepository
+## 11. ProjectRepository
 
 Links one or more Git repositories to a project. When a workspace is created, the listed repositories are cloned or mounted inside the container.
 
@@ -279,7 +318,7 @@ Links one or more Git repositories to a project. When a workspace is created, th
 
 ---
 
-## 11. ProjectFeature
+## 12. ProjectFeature
 
 Join table connecting a project to the features it uses.
 
@@ -292,7 +331,7 @@ Join table connecting a project to the features it uses.
 
 ---
 
-## 12. ProjectGroup
+## 13. ProjectGroup
 
 Defines which groups have access to a project and at what permission level. Access to a project is granted exclusively through group membership — individual user assignment is not supported. The project owner always retains full control regardless of group rules.
 
@@ -314,7 +353,7 @@ Defines which groups have access to a project and at what permission level. Acce
 
 ---
 
-## 13. DockerServerGroup
+## 14. DockerServerGroup
 
 Defines which groups have access to a Docker server. When a workspace is deployed, the platform collects all servers accessible to any group that has access to the project, then selects the most available one.
 
@@ -340,7 +379,7 @@ Defines which groups have access to a Docker server. When a workspace is deploye
 
 ---
 
-## 14. Workspace
+## 15. Workspace
 
 A running or stopped development environment. A workspace is tied to a project, a user, a specific branch, and a Docker server. It can be pinned to prevent automatic shutdown and deletion.
 
@@ -378,7 +417,7 @@ A running or stopped development environment. A workspace is tied to a project, 
 
 ---
 
-## 15. WorkspaceService
+## 16. WorkspaceService
 
 Describes an individual service exposed by a workspace (e.g. a web server, a terminal, a database port). Used by the UI to show users what is accessible and how.
 
@@ -401,7 +440,7 @@ Describes an individual service exposed by a workspace (e.g. a web server, a ter
 
 ---
 
-## 16. Invitation
+## 17. Invitation
 
 Represents a pending or historical invitation sent by an admin to bring a new user onto the platform. Invitations are time-limited, single-use, and can be revoked before acceptance. Used when invitation-only registration mode is active.
 
@@ -422,7 +461,7 @@ Represents a pending or historical invitation sent by an admin to bring a new us
 
 ---
 
-## 17. AuditLog
+## 18. AuditLog
 
 Append-only record of significant platform events for security review, incident investigation, and compliance. Entries are never modified or deleted through the application.
 
@@ -443,7 +482,7 @@ Append-only record of significant platform events for security review, incident 
 
 ---
 
-## 18. PlatformConfig
+## 19. PlatformConfig
 
 Key/value store for platform-wide configuration settings managed by administrators. Covers general settings, SMTP, OAuth providers, workspace lifecycle policies, and library source. Sensitive values (secrets, passwords) are stored encrypted at rest.
 
@@ -465,11 +504,13 @@ Key/value store for platform-wide configuration settings managed by administrato
 ```
 User ──< GroupMember >── Group ──< ProjectGroup >── Project ──< ProjectRepository
   │                        │                            │
-  │               DockerServerGroup              ProjectFeature >── Feature
+  │               DockerServerGroup              ProjectFeature >── Feature ──< FeatureDependency
+  │                        │                            │                  │
+  ├──< Invitation     DockerServer                  Template ──< TemplateFeature
   │                        │                            │
-  ├──< Invitation     DockerServer                  Template
-  │                        │                            │
-  └──< AuditLog       (server pool)               Workspace ──< WorkspaceService
+  └──< AuditLog       (server pool)          Template (parent, self-ref)
+                                                     │
+                                               Workspace ──< WorkspaceService
 
 PlatformConfig (global key/value store, standalone)
 ```

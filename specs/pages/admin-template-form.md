@@ -38,6 +38,8 @@ Page root: `PageLayout` without sidebar. Form is constrained to `max-width: 800p
 Tabs: `UnderlineNav` — **General · Packages · Storage · Services · Features**.  
 Sticky footer: always visible at the bottom of the viewport.
 
+> **Inheritance callout:** When a parent template is selected, each tab displays a read-only `canvas.subtle` banner listing the values inherited from the parent for that section (e.g. *"Inherits 3 packages from Node.js base"*). Inherited values are shown grayed-out and can be selectively reviewed, but not edited here — they must be changed on the parent.
+
 ---
 
 ## 2. Navigation Header
@@ -58,9 +60,10 @@ Mandatory fields for identity and base environment.
 |-------|------|----------|--------|
 | **Name** | `TextInput` | Yes | Max 100 chars. Unique. |
 | **Description** | `TextInput` (single line) | No | Max 255 chars. Placeholder: `"Short description (optional)"`. |
-| **Alpine version** | Two side-by-side `TextInput` (Major / Minor) | Yes | Integers only. Help text below: `"All workspace containers are based on Alpine Linux + s6-overlay."` |
-| **Min RAM (MB)** | Numeric `TextInput` | No | Default `256`. Help text: `"Minimum free RAM required on the Docker host before deploying a workspace."` |
-| **Min disk (GB)** | Numeric `TextInput` | No | Default `1.0`. One decimal allowed. |
+| **Extends (parent template)** | `Select` / autocomplete | No | Searchable dropdown listing all root templates (i.e. templates that do not themselves extend another). Shows template name + Alpine version badge. Selecting a parent pre-populates other fields with inherited values and shows the inheritance callout on the remaining tabs. Clearing this field removes inheritance. Only root templates are selectable to prevent multi-level chains. |
+| **Alpine version** | Two side-by-side `TextInput` (Major / Minor) | Yes | Integers only. Pre-filled from parent when one is selected; editable to override. Help text below: `"All workspace containers are based on Alpine Linux + s6-overlay."` |
+| **Min RAM (MB)** | Numeric `TextInput` | No | Default `256`. Pre-filled from parent (effective max). Help text: `"Minimum free RAM required on the Docker host before deploying a workspace. Effective value is the max of parent and this value."` |
+| **Min disk (GB)** | Numeric `TextInput` | No | Default `1.0`. Pre-filled from parent (effective max). One decimal allowed. |
 
 Validation on blur:
 - Name empty → `"Name is required."`
@@ -165,8 +168,21 @@ Each card shows:
 - Alpine range badge (e.g. `≥ 3.18`)
 - Short description (`Text`, `fg.muted`, 2-line clamp)
 - Port summary (e.g. `5432/TCP`)
+- **Requires** line: `"Requires: PostgreSQL"` in `fg.muted` — hidden when no dependencies.
 
 Selected cards have a `2px accent.emphasis` border + `accent.subtle` background.
+
+Inherited features (pulled in from the parent template) are shown with an **Inherited** `Label` badge (secondary). Their toggle is disabled and locked on — they are always part of the effective set and cannot be removed here.
+
+### Dependency auto-selection
+
+When a feature card is toggled on:
+1. The platform resolves the full transitive closure of `FeatureDependency` rows for that feature.
+2. Any missing required features are automatically toggled on.
+3. A dismissible `Flash variant="warning"` is shown above the grid: `"PostgreSQL was also activated because it is required by Prisma Studio."` (one line per auto-added feature).
+
+When a feature is toggled off:
+- If another currently-selected (non-inherited) feature declares it as a required dependency, the toggle is blocked and a tooltip explains which feature requires it (e.g. `"Deselect Prisma Studio first."`). The card title shakes briefly to signal rejection.
 
 ### Option panel (inline expansion)
 
@@ -224,6 +240,7 @@ When editing an existing template (`/admin/templates/:id/edit`):
 - Form is pre-populated with the template's current values.
 - An info callout is shown at the top of the **General** tab:  
   `"Changes apply to future workspace provisioning only. Running workspaces are not affected."`
+- If the template has child templates, the **Extends** field is read-only and a callout explains: `"This template is used as a parent by N child template(s). It cannot itself extend another template."`
 - If the template is used by projects, the **Alpine version** field shows an additional warning on change:  
   `"Changing the Alpine version may break existing APK package lists and feature compatibility."`
 
@@ -233,8 +250,9 @@ When editing an existing template (`/admin/templates/:id/edit`):
 
 | Action | Endpoint | Notes |
 |--------|----------|-------|
-| Load template (edit) | `GET /api/v1/templates/:id` | Full definition including features and option values. |
-| Load features | `GET /api/v1/features` | For the features tab picker. |
+| Load template (edit) | `GET /api/v1/templates/:id` | Full definition including parent template, features and option values. |
+| Load templates (parent picker) | `GET /api/v1/templates?rootOnly=true` | Returns only templates with no parent (eligible parents). |
+| Load features | `GET /api/v1/features` | For the features tab picker, includes `requiredFeatures` list per feature. |
 | Check name availability | `GET /api/v1/templates/availability?name=:name` | Debounced 300 ms on blur. Excluded from check when editing and name is unchanged. |
 | Create template | `POST /api/v1/templates` | Full template body. |
 | Update template | `PUT /api/v1/templates/:id` | Full template body. |
