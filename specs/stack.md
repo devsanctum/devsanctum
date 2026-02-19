@@ -12,7 +12,8 @@ This document defines the core tooling used in this project.
   - `@fastify/jwt` — JWT-based authentication (access + refresh tokens).
   - `@fastify/oauth2` — OAuth2 integration for third-party providers (Google, GitHub).
 - **Prisma** is used as the ORM and migration tool.
-- **PostgreSQL** is the primary relational database.
+- **PostgreSQL** is the primary relational database for production.
+- **SQLite** is used as the database for development and testing environments for simplicity and ease of setup.
 
 ## Frontend
 - **React** is used to build the web application UI.
@@ -45,12 +46,24 @@ This document defines the core tooling used in this project.
   - Routing to remote Docker hosts via upstream URL configuration.
   - Health checks on upstream container endpoints.
 
+## Testing
+- **Jest** or **Vitest** is used for unit and integration testing.
+- **React Testing Library** is used for frontend component testing.
+- **Supertest** is used for backend API testing.
+- SQLite is used as the test database for fast, isolated test execution.
+
+## Build Tools
+- **TypeScript** compiler (tsc) for type checking and compilation.
+- **Vite** is used as the frontend build tool for fast development and optimized production builds.
+- **tsx** or **ts-node** for running TypeScript files directly during development.
+
 ## Summary
 - Language: TypeScript
 - HTTP Server: Fastify
 - ORM: Prisma
-- Database: PostgreSQL
-- Frontend: React + MUI
+- Database: PostgreSQL (production), SQLite (development/testing)
+- Frontend: React + MUI + Vite
+- Testing: Jest/Vitest + React Testing Library + Supertest
 - Docker SDK: dockerode
 - Workspace base: Alpine + s6-overlay
 - Email: Nodemailer

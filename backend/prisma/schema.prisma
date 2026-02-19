@@ -1,0 +1,353 @@
+// This is your Prisma schema file
+// Learn more about Prisma: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// User & Authentication
+// ============================================================================
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  avatarUrl    String?
+  provider     String   // LOCAL, GITHUB, GOOGLE
+  providerId   String?
+  passwordHash String?
+  role         String   // USER, ADMIN
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  ownedProjects     Project[]
+  groupMemberships  GroupMember[]
+  workspaces        Workspace[]
+  sentInvitations   Invitation[]      @relation("InvitedBy")
+  auditLogs         AuditLog[]        @relation("Actor")
+  configUpdates     PlatformConfig[]  @relation("UpdatedBy")
+}
+
+// Note: SQLite doesn't support native enums
+// Valid values are documented as comments in the schema
+
+// ============================================================================
+// Groups
+// ============================================================================
+
+model Group {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  members          GroupMember[]
+  projectAccess    ProjectGroup[]
+  dockerServerAccess DockerServerGroup[]
+}
+
+model GroupMember {
+  groupId   String
+  userId    String
+  role      String   // MEMBER, MANAGER
+  createdAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+}
+
+
+
+// ============================================================================
+// Docker Servers
+// ============================================================================
+
+model DockerServer {
+  id                 String   @id @default(uuid())
+  name               String
+  host               String
+  port               Int
+  tlsEnabled         Boolean
+  caCert             String?
+  clientCert         String?
+  clientKey          String?
+  status             String   // ONLINE, OFFLINE, UNREACHABLE
+  cpuCores           Int?
+  ramTotalMb         Int?
+  ramUsedMb          Int?
+  diskTotalGb        Float?
+  diskUsedGb         Float?
+  resourcesUpdatedAt DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  groupAccess DockerServerGroup[]
+  workspaces  Workspace[]
+}
+
+
+
+model DockerServerGroup {
+  dockerServerId String
+  groupId        String
+  createdAt      DateTime @default(now())
+
+  dockerServer DockerServer @relation(fields: [dockerServerId], references: [id], onDelete: Cascade)
+  group        Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([dockerServerId, groupId])
+}
+
+// ============================================================================
+// Templates & Features
+// ============================================================================
+
+model Template {
+  id                  String   @id @default(uuid())
+  name                String
+  description         String?
+  alpineMajor         Int
+  alpineMinor         Int
+  apkPackages         String   // JSON array
+  sharedFolders       String   // JSON array
+  dockerInstructions  String?
+  defaultPorts        String   // JSON array
+  defaultEnv          String   // JSON object
+  startCommand        String?
+  minRamMb            Int      @default(256)
+  minDiskGb           Float    @default(1.0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  projects  Project[]
+  features  TemplateFeature[]
+}
+
+model Feature {
+  id                 String   @id @default(uuid())
+  name               String
+  description        String?
+  apkPackages        String   // JSON array
+  alpineMinVersion   String
+  alpineMaxVersion   String?
+  dockerInstructions String?
+  serviceName        String?
+  s6RunScript        String?
+  ports              String   // JSON array
+  defaultEnv         String   // JSON object
+  minRamMb           Int      @default(0)
+  minDiskGb          Float    @default(0.0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  options           FeatureOption[]
+  templateFeatures  TemplateFeature[]
+  projectFeatures   ProjectFeature[]
+}
+
+model TemplateFeature {
+  templateId String
+  featureId  String
+  options    String // JSON object
+
+  template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  feature  Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@id([templateId, featureId])
+}
+
+model FeatureOption {
+  id           String   @id @default(uuid())
+  featureId    String
+  key          String
+  label        String
+  description  String?
+  type         String   // STRING, NUMBER, BOOLEAN, SELECT
+  required     Boolean
+  defaultValue String?
+  selectValues String?  // JSON array for SELECT type
+  createdAt    DateTime @default(now())
+
+  feature Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@unique([featureId, key])
+}
+
+
+
+// ============================================================================
+// Projects
+// ============================================================================
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  ownerId     String
+  templateId  String
+  visibility  String   // PUBLIC, PRIVATE
+  minRamMb    Int?
+  minDiskGb   Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner        User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  template     Template           @relation(fields: [templateId], references: [id])
+  repositories ProjectRepository[]
+  features     ProjectFeature[]
+  groups       ProjectGroup[]
+  workspaces   Workspace[]
+}
+
+
+
+model ProjectRepository {
+  id            String   @id @default(uuid())
+  projectId     String
+  url           String
+  name          String
+  defaultBranch String
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectFeature {
+  projectId String
+  featureId String
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  feature Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, featureId])
+}
+
+model ProjectGroup {
+  projectId String
+  groupId   String
+  role      String   // READ, DEPLOY, MANAGE
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, groupId])
+}
+
+
+
+// ============================================================================
+// Workspaces
+// ============================================================================
+
+model Workspace {
+  id             String   @id @default(uuid())
+  name           String
+  projectId      String
+  userId         String
+  dockerServerId String
+  containerId    String?
+  branch         String
+  status         String   // PENDING, STARTING, RUNNING, STOPPING, STOPPED, DESTROYED
+  visibility     String   // PUBLIC, PRIVATE
+  slug           String   @unique
+  pinned         Boolean  @default(false)
+  kept           Boolean  @default(false)
+  lastActivityAt DateTime @default(now())
+  stopAt         DateTime?
+  destroyAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project      Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dockerServer DockerServer       @relation(fields: [dockerServerId], references: [id])
+  services     WorkspaceService[]
+}
+
+
+
+model WorkspaceService {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  slug        String
+  port        Int
+  protocol    String   // HTTP, HTTPS, WEBSOCKET, TCP
+  url         String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, slug])
+}
+
+
+
+// ============================================================================
+// Invitations
+// ============================================================================
+
+model Invitation {
+  id          String   @id @default(uuid())
+  email       String
+  token       String   @unique
+  role        String   // USER, ADMIN
+  invitedById String
+  status      String   // PENDING, ACCEPTED, REVOKED, EXPIRED
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  invitedBy User @relation("InvitedBy", fields: [invitedById], references: [id])
+}
+
+
+
+// ============================================================================
+// Audit Logs
+// ============================================================================
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actorRole  String?
+  action     String
+  resource   String
+  resourceId String?
+  metadata   String?  // JSON object
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("Actor", fields: [actorId], references: [id])
+}
+
+// ============================================================================
+// Platform Configuration
+// ============================================================================
+
+model PlatformConfig {
+  key         String   @id
+  value       String?
+  encrypted   Boolean
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+
+  updatedBy User? @relation("UpdatedBy", fields: [updatedById], references: [id])
+}
