@@ -129,7 +129,7 @@ Defines a reusable environment blueprint. A template describes the Alpine base i
 | `description`         | `string`  | NULLABLE     | Short description of the environment                                                             |
 | `alpineMajor`         | `int`     | NOT NULL     | Alpine Linux major version (e.g. `3`)                                                            |
 | `alpineMinor`         | `int`     | NOT NULL     | Alpine Linux minor version (e.g. `19`)                                                           |
-| `aptPackages`         | `json`    | NOT NULL     | Ordered list of APK package names to install at build time (e.g. `["nodejs", "npm", "git"]`)     |
+| `apkPackages`         | `json`    | NOT NULL     | Ordered list of APK package names to install at build time (e.g. `["nodejs", "npm", "git"]`)     |
 | `sharedFolders`       | `json`    | NOT NULL     | List of absolute paths to mount as shared volumes across all workspaces (e.g. `["/home/user"]`)  |
 | `dockerInstructions`  | `text`    | NULLABLE     | Raw Dockerfile instructions appended after the base setup (e.g. `RUN`, `COPY`, `ENV` directives) |
 | `defaultPorts`        | `json`    | NOT NULL     | Array of default exposed ports and their protocols                                               |

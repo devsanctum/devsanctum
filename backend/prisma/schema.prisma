@@ -121,7 +121,7 @@ model Template {
   description         String?
   alpineMajor         Int
   alpineMinor         Int
-  aptPackages         String   // JSON array
+  apkPackages         String   // JSON array
   sharedFolders       String   // JSON array
   dockerInstructions  String?
   defaultPorts        String   // JSON array
