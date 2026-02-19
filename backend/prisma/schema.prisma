@@ -19,10 +19,10 @@ model User {
   email        String   @unique
   name         String
   avatarUrl    String?
-  provider     AuthProvider
+  provider     String   // LOCAL, GITHUB, GOOGLE
   providerId   String?
   passwordHash String?
-  role         UserRole
+  role         String   // USER, ADMIN
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -36,16 +36,8 @@ model User {
   configUpdates     PlatformConfig[]  @relation("UpdatedBy")
 }
 
-enum AuthProvider {
-  LOCAL
-  GITHUB
-  GOOGLE
-}
-
-enum UserRole {
-  USER
-  ADMIN
-}
+// Note: SQLite doesn't support native enums
+// Valid values are documented as comments in the schema
 
 // ============================================================================
 // Groups
@@ -67,7 +59,7 @@ model Group {
 model GroupMember {
   groupId   String
   userId    String
-  role      GroupMemberRole
+  role      String   // MEMBER, MANAGER
   createdAt DateTime @default(now())
 
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
@@ -76,10 +68,7 @@ model GroupMember {
   @@id([groupId, userId])
 }
 
-enum GroupMemberRole {
-  MEMBER
-  MANAGER
-}
+
 
 // ============================================================================
 // Docker Servers
@@ -94,7 +83,7 @@ model DockerServer {
   caCert             String?
   clientCert         String?
   clientKey          String?
-  status             DockerServerStatus
+  status             String   // ONLINE, OFFLINE, UNREACHABLE
   cpuCores           Int?
   ramTotalMb         Int?
   ramUsedMb          Int?
@@ -109,11 +98,7 @@ model DockerServer {
   workspaces  Workspace[]
 }
 
-enum DockerServerStatus {
-  ONLINE
-  OFFLINE
-  UNREACHABLE
-}
+
 
 model DockerServerGroup {
   dockerServerId String
@@ -192,7 +177,7 @@ model FeatureOption {
   key          String
   label        String
   description  String?
-  type         FeatureOptionType
+  type         String   // STRING, NUMBER, BOOLEAN, SELECT
   required     Boolean
   defaultValue String?
   selectValues String?  // JSON array for SELECT type
@@ -203,12 +188,7 @@ model FeatureOption {
   @@unique([featureId, key])
 }
 
-enum FeatureOptionType {
-  STRING
-  NUMBER
-  BOOLEAN
-  SELECT
-}
+
 
 // ============================================================================
 // Projects
@@ -221,7 +201,7 @@ model Project {
   description String?
   ownerId     String
   templateId  String
-  visibility  Visibility
+  visibility  String   // PUBLIC, PRIVATE
   minRamMb    Int?
   minDiskGb   Float?
   createdAt   DateTime @default(now())
@@ -235,10 +215,7 @@ model Project {
   workspaces   Workspace[]
 }
 
-enum Visibility {
-  PUBLIC
-  PRIVATE
-}
+
 
 model ProjectRepository {
   id            String   @id @default(uuid())
@@ -264,7 +241,7 @@ model ProjectFeature {
 model ProjectGroup {
   projectId String
   groupId   String
-  role      ProjectRole
+  role      String   // READ, DEPLOY, MANAGE
   createdAt DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -273,11 +250,7 @@ model ProjectGroup {
   @@id([projectId, groupId])
 }
 
-enum ProjectRole {
-  READ
-  DEPLOY
-  MANAGE
-}
+
 
 // ============================================================================
 // Workspaces
@@ -291,8 +264,8 @@ model Workspace {
   dockerServerId String
   containerId    String?
   branch         String
-  status         WorkspaceStatus
-  visibility     Visibility
+  status         String   // PENDING, STARTING, RUNNING, STOPPING, STOPPED, DESTROYED
+  visibility     String   // PUBLIC, PRIVATE
   slug           String   @unique
   pinned         Boolean  @default(false)
   kept           Boolean  @default(false)
@@ -308,14 +281,7 @@ model Workspace {
   services     WorkspaceService[]
 }
 
-enum WorkspaceStatus {
-  PENDING
-  STARTING
-  RUNNING
-  STOPPING
-  STOPPED
-  DESTROYED
-}
+
 
 model WorkspaceService {
   id          String   @id @default(uuid())
@@ -323,7 +289,7 @@ model WorkspaceService {
   name        String
   slug        String
   port        Int
-  protocol    ServiceProtocol
+  protocol    String   // HTTP, HTTPS, WEBSOCKET, TCP
   url         String?
   createdAt   DateTime @default(now())
 
@@ -332,12 +298,7 @@ model WorkspaceService {
   @@unique([workspaceId, slug])
 }
 
-enum ServiceProtocol {
-  HTTP
-  HTTPS
-  WEBSOCKET
-  TCP
-}
+
 
 // ============================================================================
 // Invitations
@@ -347,9 +308,9 @@ model Invitation {
   id          String   @id @default(uuid())
   email       String
   token       String   @unique
-  role        UserRole
+  role        String   // USER, ADMIN
   invitedById String
-  status      InvitationStatus
+  status      String   // PENDING, ACCEPTED, REVOKED, EXPIRED
   expiresAt   DateTime
   acceptedAt  DateTime?
   createdAt   DateTime @default(now())
@@ -357,12 +318,7 @@ model Invitation {
   invitedBy User @relation("InvitedBy", fields: [invitedById], references: [id])
 }
 
-enum InvitationStatus {
-  PENDING
-  ACCEPTED
-  REVOKED
-  EXPIRED
-}
+
 
 // ============================================================================
 // Audit Logs
