@@ -34,52 +34,6 @@ Related features: [projects.md](../features/projects.md), [templates.md](../feat
 ```
 
 Page root: `PageLayout` with the standard authenticated sidebar. The form content is constrained to `max-width: 768px`, centered inside `PageLayout.Content`.
-│                                                                  │
-│  ─────────────────────────────────────────────────────────────  │
-│                                                                  │
-│  Owner            Project name *             [ Slug preview ]   │
-│  [avatar ▾]   /   [________________________]                    │
-│                                                                  │
-│  Description                                                     │
-│  [____________________________________________________________]  │
-│                                                                  │
-│  Template *                                                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │  Node.js     │  │  Python      │  │  Go          │  …       │
-│  │  Alpine 3.19 │  │  Alpine 3.19 │  │  Alpine 3.20 │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-│                                                                  │
-│  Visibility                                                      │
-│  ◉ Private  — Only members of assigned groups can access.       │
-│  ○ Public   — Visible to anyone. Running workspaces may be      │
-│               exposed without authentication.                    │
-│                                                                  │
-│  ─────────────────────────────────────────────────────────────  │
-│                                                                  │
-│  Repositories  (at least one required)                          │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │ Name        │ Git URL                             [ × ] │   │
-│  │ [_________] │ [___________________________________]      │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│  [ + Add another repository ]                                    │
-│                                                                  │
-│  ─────────────────────────────────────────────────────────────  │
-│                                                                  │
-│  Features  (optional)                                           │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │ □ PostgreSQL │  │ □ VS Code    │  │ □ Redis      │  …       │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-│                                                                  │
-│  ▸ Advanced — resource requirements                              │
-│                                                                  │
-│  ─────────────────────────────────────────────────────────────  │
-│                                                                  │
-│                           [ Create project ]                     │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-Page root uses `PageLayout` without a sidebar pane. The form is constrained to a max-width of `768px`, centered.
 
 ---
 
