@@ -24,7 +24,8 @@ Inspired by [Coder](https://coder.com/), DevSanctum takes a more straightforward
 | Backend | Node.js + Fastify |
 | ORM | Prisma |
 | Database | PostgreSQL |
-| Frontend | React |
+| Frontend | React + Vite |
+| UI Library | Primer React (GitHub design system) |
 | Docker SDK | dockerode |
 | Workspace base | Alpine Linux + s6-overlay |
 | Reverse proxy | Traefik (dynamic HTTP API) |
@@ -40,6 +41,8 @@ All project specifications are located in the [`specs/`](specs/) folder.
 | [`specs/stack.md`](specs/stack.md) | Technology choices and rationale |
 | [`specs/architecture.md`](specs/architecture.md) | System architecture, MVC structure, SOLID principles, routing design |
 | [`specs/database.md`](specs/database.md) | Full relational data model (15 tables) |
+| [`specs/ux.md`](specs/ux.md) | UX principles, async states, forms, navigation, accessibility, microcopy |
+| [`specs/features/ui-components.md`](specs/features/ui-components.md) | Primer React component usage reference by use case |
 | [`specs/features/`](specs/features/) | Feature specifications with use cases and UI/UX |
 | [`specs/features/admin/`](specs/features/admin/) | Administration panel features |
 

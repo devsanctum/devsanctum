@@ -55,6 +55,26 @@ DevSanctum is a simplified self-hosted developer platform for provisioning and a
 - **API Calls**: Use async/await with proper error handling
 - **Accessibility**: Follow WCAG guidelines, use semantic HTML and ARIA labels
 
+### UI Components (Primer React)
+Refer to `specs/features/ui-components.md` for the canonical component usage reference. Key rules:
+- **Use Primer components exclusively** — `Box`, `Text`, `Heading`, `Button`, `FormControl`, `ActionList`, `DataTable`, `Flash`, `Dialog`, `NavList`, `UnderlineNav`, `Header`, `PageLayout`.
+- **Never use hardcoded colors or raw CSS.** Use `sx` prop with design tokens (`fg.default`, `canvas.subtle`, `border.default`, etc.).
+- **Icons** come from `@primer/octicons-react` only. Always set `aria-label` on icon-only buttons.
+- **Button variants**: `primary` for main CTA, `default` for secondary, `danger` for destructive, `invisible` for tertiary.
+- **Forms** always wrap fields in `FormControl` with label, caption, and validation message.
+- **Page layout** always uses `PageLayout` as root. Sidebar pages use `PageLayout.Pane`.
+
+### UX Standards
+Refer to `specs/ux.md` for the full UX specification. Key rules:
+- **Every async operation** handles four states: loading (skeleton), success, empty (with CTA), error (with retry).
+- **Never block the page** with a full-screen spinner. Use skeletons or inline spinners.
+- **Destructive actions** always require a `Dialog` confirmation. High-impact actions require typing the resource name.
+- **Form validation** runs on blur, not on every keystroke. Server errors map back to individual fields.
+- **Feedback**: success `Flash` auto-dismisses after 5s. Error `Flash` persists until dismissed.
+- **Button labels are verbs**: *"Deploy"*, *"Save changes"*, *"Delete workspace"* — never *"OK"* or *"Submit"*.
+- **Optimistic UI**: update lists immediately on create/delete, confirm with server, roll back on error.
+- **Vocabulary is consistent**: use the same domain terms as the specs (Workspace, Template, Feature, Project).
+
 ### Testing
 - **Framework**: Use Jest or Vitest for unit and integration tests
 - **Coverage**: Aim for high test coverage on business logic
@@ -181,10 +201,11 @@ DevSanctum is a simplified self-hosted developer platform for provisioning and a
 1. Create component file in appropriate directory
 2. Define props interface
 3. Implement component with TypeScript
-4. Use Primer React components for styling (`Box`, `Text`, `Heading`, `Button`, etc.)
-5. Add prop validation
-6. Write component tests
-7. Export from index file
+4. Use Primer React components following `specs/features/ui-components.md`
+5. Handle all async states: loading (skeleton), success, empty, error — per `specs/ux.md`
+6. Add prop validation
+7. Write component tests (including loading and error states)
+8. Export from index file
 
 ### Database Schema Changes
 1. Update Prisma schema
@@ -208,3 +229,5 @@ DevSanctum is a simplified self-hosted developer platform for provisioning and a
 - Database Schema: `specs/database.md`
 - Feature Specs: `specs/features/`
 - Technology Stack: `specs/stack.md`
+- UI Components Reference: `specs/features/ui-components.md`
+- UX Standards: `specs/ux.md`
