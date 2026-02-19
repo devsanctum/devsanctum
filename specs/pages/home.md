@@ -4,7 +4,7 @@ Auth required: **no** — if the visitor is already authenticated, redirect imme
 
 Primary goal: let any visitor discover the platform and **access public workspaces without creating an account**. Sign-up and sign-in are offered as secondary actions.
 
-Related page: see [dashboard.md](dashboard.md) for the connected dashboard (`/dashboard`).
+Related pages: [dashboard.md](dashboard.md) for the connected dashboard (`/dashboard`), [explore-project.md](explore-project.md) for the public project detail page (`/explore/:projectSlug`).
 
 ---
 
@@ -58,8 +58,8 @@ Each **workspace row** shows:
 
 | Field | Detail |
 |-------|--------|
-| Workspace name | Plain text (not a link — visitors cannot access the detail page) |
-| Project | Linked to `/explore/:projectSlug` |
+| Workspace name | Plain text (not a link — visitors cannot access the workspace detail page) |
+| Project | `Label`-style link → `/explore/:projectSlug` (the public project page) |
 | Branch badge | `branch-name` |
 | Template badge | Template name |
 | Running duration | "Running for 2h 14m" |
@@ -69,7 +69,9 @@ Each **workspace row** shows:
 - Each row is a bordered `Box` (card-style) to give visual weight to the action chips.
 
 ### Empty state
-"No public workspaces are currently running. Check back later or [explore public projects →]."
+"No public workspaces are currently running. Check back later or [explore public projects →](/explore)."
+
+The `explore public projects` text is an inline link → `/explore`.
 
 ### UX note
 This section renders first and loads independently. Even if the projects section is loading, visitors can already see and open workspaces.
@@ -87,14 +89,17 @@ The **8 most recently active** projects with `visibility = PUBLIC`, ordered by `
 Card grid: 4 cols → 2 on tablet → 1 on mobile.
 
 Each **project card** shows:
-- Project name → linked to `/explore/:projectSlug`
+- Project name → linked to `/explore/:projectSlug` (public project page, see [explore-project.md](explore-project.md))
 - Owner avatar + username
 - Template badge
 - Up to 3 feature badges, `+N more` if exceeded
 - Running workspace count (`CounterLabel`)
 - "Last active" relative timestamp (e.g. "3 hours ago")
+- **"View project →"** link in the card footer → `/explore/:projectSlug`
 
 Link below the grid: **"Explore all public projects →"** → `/explore`
+
+> Every project name and every "View project →" link routes to the same `/explore/:projectSlug` page. The project slug is derived from `project.slug` returned by the API.
 
 ### Empty state
 "Nothing public yet." — no CTA, no sign-up pressure.
