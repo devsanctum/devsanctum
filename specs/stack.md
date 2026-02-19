@@ -16,7 +16,7 @@ This document defines the core tooling used in this project.
 
 ## Frontend
 - **React** is used to build the web application UI.
-- **lui** is the UI component library used to build and style the interface.
+- **MUI (Material UI)** is the UI component library used to build and style the interface.
 
 ## Email
 - **Nodemailer** is used to send transactional emails (invitations, notifications).
@@ -50,7 +50,7 @@ This document defines the core tooling used in this project.
 - HTTP Server: Fastify
 - ORM: Prisma
 - Database: PostgreSQL
-- Frontend: React + lui
+- Frontend: React + MUI
 - Docker SDK: dockerode
 - Workspace base: Alpine + s6-overlay
 - Email: Nodemailer
