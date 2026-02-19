@@ -48,6 +48,27 @@ This document defines the core tooling used in this project.
   - Routing to remote Docker hosts via upstream URL configuration.
   - Health checks on upstream container endpoints.
 
+## Avatar Generation
+- **DiceBear** (`@dicebear/core` + `@dicebear/collection`) generates deterministic avatar images for users who have not uploaded a profile picture.
+- Style: **`initials`** — renders the user's initials on a coloured background, consistent with the platform's teal palette.
+- Avatars are generated **client-side** as inline SVG data URIs, seeded by the user's `id`. The same seed always produces the same avatar.
+- The `Avatar` Primer React component receives the generated data URI as its `src` prop. No separate avatar endpoint or server-side generation is needed.
+- When a user uploads a custom profile picture it takes precedence; the generated avatar is no longer used.
+- Background colour is fixed to the platform primary (`#088395`) so generated avatars feel native to the UI.
+- Example helper:
+  ```ts
+  import { createAvatar } from '@dicebear/core';
+  import { initials } from '@dicebear/collection';
+
+  export function generateAvatarUrl(userId: string, name: string): string {
+    return createAvatar(initials, {
+      seed: userId,
+      backgroundColor: ['088395'],
+      textColor: ['ffffff'],
+    }).toDataUri();
+  }
+  ```
+
 ## Testing
 - **Jest** or **Vitest** is used for unit and integration testing.
 - **React Testing Library** is used for frontend component testing.

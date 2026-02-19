@@ -65,6 +65,77 @@ When the platform is in invitation-only mode, a user receives an invitation emai
 - OAuth buttons available as an alternative to password setup.
 - On expired or invalid token: error state with message "This invitation link is invalid or has expired." and a prompt to contact the administrator.
 
+---
+
+## Email Confirmation
+
+### Purpose
+Verify that the registering user owns the email address they provided. Prevents account enumeration abuse and ensures transactional emails reach a real inbox.
+
+### Platform setting
+Email confirmation can be **enabled or disabled** by an administrator in the platform configuration. When disabled, accounts are active immediately after registration and the user is logged in automatically.
+
+### Flow (when enabled)
+
+1. User submits the registration form (`POST /api/v1/auth/register`).
+2. Backend creates the user account with `status = PENDING_CONFIRMATION`.
+3. Backend generates a **secure random token** (32 bytes, URL-safe base64), stores its bcrypt hash alongside `expiresAt = now + 24h`, and sends a confirmation email.
+4. API responds with `{ status: "confirmation_required" }` — no tokens are issued yet.
+5. Frontend shows an inline confirmation state: "Check your inbox. We've sent a confirmation link to `<email>`." with a "Resend email" link (rate-limited to once per 60 s per email).
+6. User clicks the link in the email → `GET /api/v1/auth/confirm?token=<token>`.
+7. Backend validates the token (hash match + not expired + not already used), sets `user.status = ACTIVE`, marks the token as consumed, issues access + refresh tokens, and redirects to `/dashboard`.
+8. On first load of `/dashboard`, the frontend detects the `isNewUser` flag in the JWT payload and shows the welcome message (see below).
+
+### Error cases
+
+| Scenario | Response | UI behaviour |
+|----------|----------|--------------|
+| Token expired (> 24 h) | 400 `TOKEN_EXPIRED` | Branded error page: "This confirmation link has expired." + "Request a new one" link |
+| Token already used | 400 `TOKEN_USED` | "This link has already been used. Sign in instead." |
+| Token not found / malformed | 400 `TOKEN_INVALID` | "This confirmation link is invalid." |
+| User already active | 200 redirect | Silent — user is already confirmed, just redirect to `/dashboard` |
+
+### Resend rate limiting
+- Maximum **3 resend requests per email per hour** enforced server-side.
+- Exceeding the limit returns 429 `{ code: "RATE_LIMITED", retryAfterSeconds: N }`.
+- Frontend shows: "You can request a new link in N seconds." with a disabled "Resend" button that counts down.
+
+### Email content
+
+**Subject**: `Confirm your DevSanctum account`
+
+**Body** (plain text + HTML):
+- Platform logo
+- Greeting: "Hi `<name>`,"
+- One-line explanation: "Click the button below to confirm your email address and activate your account."
+- CTA button: **"Confirm my account"** → `https://<platform-domain>/api/v1/auth/confirm?token=<token>`
+- Expiry note: "This link expires in 24 hours."
+- Fallback plain text link for email clients that block buttons.
+- Footer: platform name + "You're receiving this because someone registered with this email address. If this wasn't you, you can safely ignore this message."
+
+---
+
+## Welcome Message
+
+Displayed **once** on `/dashboard` after a user's first successful login — whether via direct registration (no email confirmation) or after confirming their email.
+
+### Detection
+The backend sets `isNewUser: true` in the JWT access token payload on the very first token issuance for an account. The frontend reads this claim and shows the welcome message. The flag is only set once — subsequent token refreshes do not carry it.
+
+### UI
+A `Flash variant="success"` pinned to the top of the dashboard content area (below the header, above all sections):
+
+```
+✓  Welcome to DevSanctum, <name>! Your account is ready. Start by creating your first project.
+                                                         [ + New Project ]
+```
+
+- Auto-dismisses after **8 seconds**.
+- The `+ New Project` button opens the new project flow directly.
+- Dismissed state is stored in `sessionStorage` so a page refresh within the same session does not re-show it.
+
+---
+
 ### Post-login redirect
 - Redirect to `/dashboard` on success.
 - If the user tried to access a protected route before login, redirect back to the original URL.
