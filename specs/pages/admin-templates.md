@@ -123,65 +123,69 @@ Both CTAs are the same as the page heading actions.
 
 ## 5. Import from Library Drawer
 
-Triggered by **Import from library** CTA. Opens as a right-side `Dialog` (full-height panel) without leaving the list page.
+Triggered by **Import from library** CTA. Opens as a right-side full-height panel — the template list stays visible underneath. Follows the shared marketplace pattern from `specs/features/library.md` → "Marketplace Drawer".
 
 ### 5.1 Layout
 
 ```
 ┌──────────────────────────────────────────┐
-│  Import from library              [ × ]  │
+│  Browse template library          [ × ]  │
 │  ────────────────────────────────────    │
-│  [ Search library… ]                     │
+│  [ 🔍 Search templates… ]                │
+│  Tags: [nodejs] [python] [backend] …    │
 │                                          │
 │  ┌────────────────────────────────────┐  │
-│  │  Node.js  · Alpine 3.21            │  │
+│  │  Node.js          v1.2.0           │  │
+│  │  Alpine 3.21  ·  2 features        │  │
 │  │  Node.js runtime with npm and git. │  │
-│  │  2 features  ·  v1.2.0             │  │
-│  │                          [Import]  │  │
+│  │  [nodejs] [javascript]  [ Import ] │  │
 │  └────────────────────────────────────┘  │
 │  ┌────────────────────────────────────┐  │
-│  │  Python  · Alpine 3.20             │  │
-│  │  …                                 │  │
-│  │                          [Import]  │  │
+│  │  Python           v1.0.0           │  │
+│  │  Alpine 3.20  ·  1 feature         │  │
+│  │  Python 3.12 with pip and venv.    │  │
+│  │  [python]    [✓ Imported]       ↓  │  │
 │  └────────────────────────────────────┘  │
 │  …                                       │
-│                                          │
-│  Library source: github.com/devsanctum  │
-│  [ Configure library URL → ]             │
+│  ─────────────────────────────────────   │
+│  Source: github.com/devsanctum  🟢  [↻]  │
+│  Last updated: 12 minutes ago            │
 └──────────────────────────────────────────┘
 ```
 
 ### 5.2 Loading the library
 
-On drawer open the platform fetches the library index. While loading, show 3 skeleton rows. On failure:  
-`Flash variant="danger"`: `"Could not reach the library. Check your network or library URL."` + **Retry**.
+On drawer open the platform calls `GET /api/v1/library/templates`. While loading, show 3 skeleton rows. On failure: `Flash variant="danger"` — `"Could not reach the library. Check your network or library URL."` + **Retry**.
+
+If the index is stale (`stale: true` in the response), show a `Flash variant="warning"` at the top of the drawer: `"Showing cached results — library could not be refreshed."` + **Retry** link.
 
 ### 5.3 Library card (per entry)
 
 | Field | Detail |
 |-------|--------|
-| Name | `Text`, semibold |
-| Alpine version | `Label`, secondary |
-| Description | `Text`, `fg.muted`, 2-line clamp |
-| Feature count | Plain `Text`, `fg.muted` |
-| Library version | `Label`, secondary (`v1.2.0`) |
-| **Already imported** badge | `Label variant="success"` — shown if a local template with the same library `id` already exists. The **Import** button becomes **Re-import** in that case. |
-| **Import / Re-import** | `Button`, `variant="primary"`, `size="small"` |
+| Name + version | `Text` semibold + `Label` secondary |
+| Alpine version | `Label` secondary |
+| Feature count | `Text` `fg.muted` — `"N features"` |
+| Description | `Text` `fg.muted`, 2-line clamp |
+| Tag chips | Small `Label` components |
+| `✓ Imported` | `Label variant="success"` — shown if a local template with the same library `id` already exists |
+| `↑ Update` | `Label variant="attention"` — shown when library version > local version |
+| **Import** / **↓** | `Button variant="primary" size="small"`. `↓` icon when already imported (re-import). |
 
 ### 5.4 Import action
 
-On **Import** click:
-
-1. Button shows `Spinner` + `"Importing…"`, disabled.
-2. Backend resolves any required features not yet present locally (auto-imports them silently).
-3. On success: the drawer entry shows `Flash variant="success"` inline: `"Imported. Review and save →"` with a link to `/admin/templates/:newId/edit`. The rest of the drawer remains open.
-4. On failure: inline `Flash variant="danger"` below the card with the error message. Button resets to **Import**.
+1. Admin clicks **Import** — button shows `Spinner`, disabled.
+2. Backend calls `POST /api/v1/library/templates/:id/import`.
+3. Backend resolves required features: any feature referenced by the template that does not yet exist locally is **auto-imported silently** in the same request (no extra dialog).
+4. On success: card badge updates to `✓ Imported`. Inline `Flash variant="success"`: `"<name> imported. [ Edit → ]"` with a link to `/admin/templates/:newId/edit`. The drawer stays open.
+5. On re-import: updates the local template without extra confirmation.
+6. On error: inline `Flash variant="danger"` below the card; button resets.
 
 ### 5.5 Library source footer
 
-At the bottom of the drawer, a dimmed line:  
-`Library source: github.com/devsanctum/library`  
-`Configure library URL →` — navigates to `/admin/configuration` (system settings page), closing the drawer.
+Dimmed line showing source URL, status indicator (🟢 fresh / 🟡 stale / 🔴 unreachable), last updated timestamp, and a `[↻]` Refresh icon button (`POST /api/v1/library/refresh`).
+
+A `Configure library URL →` link navigates to `/admin/configuration` in a new tab, preserving the drawer state.
 
 ---
 
@@ -245,14 +249,18 @@ This template is extended by 2 child template(s). Delete or re-parent them befor
 |--------|----------|-------|
 | Load templates | `GET /api/v1/templates` | Returns list with project count, child count, and parent name per template. |
 | Delete template | `DELETE /api/v1/templates/:id` | Returns 409 if projects exist or child templates exist (includes affected list). |
-| Fetch library index | `GET /api/v1/library/templates` | Proxied by backend from the configured library URL. |
-| Import library template | `POST /api/v1/library/templates/:libraryId/import` | Returns the new local template `id`. |
+| Browse library templates | `GET /api/v1/library/templates?search=&tag=` | Returns cached index entries. `stale: true` when index is outdated. |
+| Get library template detail | `GET /api/v1/library/templates/:id` | Downloads + caches full definition on demand. |
+| Import library template | `POST /api/v1/library/templates/:id/import` | Returns the new local template `id` and list of auto-imported feature IDs. |
+| Refresh library index | `POST /api/v1/library/refresh` | Forces re-fetch of both features and templates index files. |
 
 ---
 
 ## 8. UX Notes
 
 - The two CTAs (**+ New template** and **Import from library**) are always co-located so admins can choose their path without hunting.
-- Import stays in a drawer rather than a separate page — the admin keeps context of the existing list and can import several entries in one session.
-- After an import, the user is taken to the edit form to review before the template becomes visible to users. This prevents accidental publishing of unreviewed definitions.
-- Deletion is never optimistic — the guard check (`GET` project count) is performed before showing the confirmation, so the admin always sees accurate information.
+- The library drawer stays open after an import — the admin can import several templates in one session without reopening it.
+- There is no manual URL input. The library index is the only import surface; it is searched and filtered inside the drawer.
+- Feature dependencies are resolved silently on the backend during import. The admin does not need to import features separately first.
+- After an import, the `[ Edit → ]` inline link takes the admin directly to the edit form to review before the template becomes visible to users.
+- Deletion is never optimistic — the guard check is performed before showing the confirmation dialog, so the admin always sees accurate information.
