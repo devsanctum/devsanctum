@@ -41,59 +41,7 @@ An admin opens the library browser (`/admin/library`), finds a template, and cli
 
 ## UI/UX
 
-### Template List Page (`/admin/templates` for admin, `/templates` for users browsing)
-- Card grid layout. Each card shows:
-  - Template name
-  - Docker image reference
-  - Short description
-  - Number of projects using it
-- Search bar to filter by name or image.
-- Admin CTA: **+ New Template** (top right).
-- Each card has an **Edit** and **Delete** action (admin only).
+See the dedicated page specs:
 
-### Template List Page (`/admin/templates` for admin, `/templates` for users browsing)
-- Card grid layout. Each card shows:
-  - Template name
-  - Alpine version badge (e.g. `Alpine 3.19`)
-  - Short description
-  - Feature badges (icons of activated features)
-  - Number of projects using it
-- Search bar to filter by name.
-- Admin CTA: **+ New Template** (top right).
-- Each card has an **Edit** and **Delete** action (admin only).
-
-### Create / Edit Template Form (full page, tabbed layout)
-
-#### Tab 1 — General
-- **Name** (required)
-- **Description** (optional)
-- **Alpine version** — two numeric inputs side by side: **Major** and **Minor** (e.g. `3` / `19`). Help text: "All workspace containers are built on Alpine Linux + s6-overlay."
-
-#### Tab 2 — Packages
-- **APK packages** — tag input field. The user types a package name and presses Enter to add it. Each package appears as a removable chip. Packages are installed in order.
-- **Docker instructions** — monospace textarea. Raw Dockerfile lines appended after the base image setup. Placeholder: `RUN curl -fsSL https://... | sh`.
-
-#### Tab 3 — Storage
-- **Shared folders** — dynamic list of absolute path inputs. Each path is mounted as a Docker volume shared across all workspaces using this template. Add/remove rows. Example: `/home/user`, `/workspace/shared`.
-
-#### Tab 4 — Services
-- **Exposed ports** — dynamic list: port number + protocol dropdown (`HTTP` / `HTTPS` / `TCP`) + **Public** toggle (whether this port may be shown to unauthenticated visitors on a public project page; default: off). Add/remove rows.
-- **Environment variables** — dynamic key/value table. Add/remove rows.
-- **Start command** — optional text input.
-
-#### Tab 5 — Features
-- Multi-select list of available features (card grid with toggle).
-- When a feature is toggled on, an **Options** panel expands below it showing the feature's configurable fields (key/value inputs, pre-filled with the feature's defaults).
-- Example: enabling PostgreSQL shows inputs for `version`, `defaultDb`, `port`.
-- Features with no options show a simple "No options available" note.
-
-- CTA: **Save Template** | **Cancel** (sticky footer).
-
-### Template Detail / Preview Page
-- Read-only view of all fields.
-- Lists projects that reference this template (linked).
-
-### Deletion guard
-- If the template is in use, the delete button shows a warning modal:
-  > "This template is used by N project(s). Reassign them before deleting."
-- Lists the affected projects with links.
+- **[specs/pages/admin-templates.md](../pages/admin-templates.md)** — template list, search, import-from-library drawer, and delete guard.
+- **[specs/pages/admin-template-form.md](../pages/admin-template-form.md)** — create / edit form (tabbed: General, Packages, Storage, Services, Features).
