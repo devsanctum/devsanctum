@@ -41,7 +41,7 @@ Each entry is a single JSON file. The filename (without extension) is used as th
   "serviceName": "string | null",        // s6-overlay service name, null = config-only
   "s6RunScript": "string | null",        // content of the s6 run script, supports {{option.KEY}}
   "ports": [
-    { "name": "string", "port": 0, "type": "HTTP | HTTPS | WEBSOCKET | CUSTOM" }
+    { "name": "string", "port": 0, "type": "HTTP | HTTPS | WEBSOCKET | CUSTOM", "isPublic": false }
   ],
   "defaultEnv": { "KEY": "value" },      // supports {{option.KEY}}
   "options": [
@@ -73,7 +73,7 @@ Each entry is a single JSON file. The filename (without extension) is used as th
   "sharedFolders": ["string"],           // absolute paths mounted across all workspaces
   "dockerInstructions": "string",        // raw Dockerfile block
   "ports": [
-    { "name": "string", "port": 0, "type": "HTTP | HTTPS | WEBSOCKET | CUSTOM" }
+    { "name": "string", "port": 0, "type": "HTTP | HTTPS | WEBSOCKET | CUSTOM", "isPublic": false }
   ],
   "defaultEnv": { "KEY": "value" },
   "features": [

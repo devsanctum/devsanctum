@@ -16,7 +16,7 @@ An admin defines a new feature by providing:
 - **Minimum disk** (`minDiskGb`) — additional disk space this feature requires on the Docker host (default: 0).
 - Optional **Docker instructions** — a raw Dockerfile block (e.g. `COPY`, `RUN`, `ENV`) supporting `{{option.KEY}}` variable interpolation.
 - An optional **s6-overlay service**: service name and the content of the `run` script (also supports `{{option.KEY}}` interpolation).
-- The **ports** exposed, each with a name, port number, and type (`HTTP`, `HTTPS`, `WEBSOCKET`, `CUSTOM`).
+- The **ports** exposed, each with a name, port number, type (`HTTP`, `HTTPS`, `WEBSOCKET`, `CUSTOM`), and a **public visibility** flag (`isPublic`) that indicates whether this port may be shown to unauthenticated visitors on the public project page (default: `false`).
 - Default **environment variables** injected into the workspace (support `{{option.KEY}}` interpolation).
 - A list of **options**: each option has a key, label, type (`STRING`, `NUMBER`, `BOOLEAN`, `SELECT`), a required flag, and an optional default value.
 
@@ -74,7 +74,7 @@ When a template activates a feature, the platform validates that all `required` 
   - **Run script** — textarea for the s6-overlay `run` script content.
   - Inline hint: "Use `{{option.KEY}}` to interpolate option values."
 - **Exposed Ports** section:
-  - Dynamic list. Each row: **Name**, **Port number**, **Type** (dropdown: `HTTP` / `HTTPS` / `WEBSOCKET` / `CUSTOM`).
+  - Dynamic list. Each row: **Name**, **Port number**, **Type** (dropdown: `HTTP` / `HTTPS` / `WEBSOCKET` / `CUSTOM`), **Public** toggle (checkbox: whether this port may be shown to unauthenticated visitors on a public project page; default: off).
 - **Environment Variables** section:
   - Dynamic key/value table. Values support `{{option.KEY}}` interpolation.
 - **Options** section:

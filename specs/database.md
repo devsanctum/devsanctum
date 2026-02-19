@@ -132,7 +132,7 @@ Defines a reusable environment blueprint. A template describes the Alpine base i
 | `aptPackages`         | `json`    | NOT NULL     | Ordered list of APK package names to install at build time (e.g. `["nodejs", "npm", "git"]`)     |
 | `sharedFolders`       | `json`    | NOT NULL     | List of absolute paths to mount as shared volumes across all workspaces (e.g. `["/home/user"]`)  |
 | `dockerInstructions`  | `text`    | NULLABLE     | Raw Dockerfile instructions appended after the base setup (e.g. `RUN`, `COPY`, `ENV` directives) |
-| `defaultPorts`        | `json`    | NOT NULL     | Array of default exposed ports and their protocols                                               |
+| `defaultPorts`        | `json`    | NOT NULL     | Array of default exposed ports and their protocols. Each entry: `{ name, port, type, isPublic }` where `isPublic` (boolean, default `false`) controls whether the port is shown to unauthenticated visitors on the public project page. |
 | `defaultEnv`          | `json`    | NOT NULL     | Default environment variables injected into every workspace container (key/value pairs)          |
 | `startCommand`        | `string`  | NULLABLE     | Override the s6-overlay entrypoint command if needed                                             |
 | `minRamMb`            | `int`     | NOT NULL, DEFAULT 256 | Minimum RAM in megabytes required to deploy a workspace from this template. Used during Docker server selection. |
@@ -180,7 +180,7 @@ Represents an optional add-on that can be activated on a template. Each feature 
 | `dockerInstructions`   | `text`    | NULLABLE     | Raw Dockerfile instruction block appended during image build. Supports `{{option.KEY}}` variable interpolation from resolved option values. |
 | `serviceName`          | `string`  | NULLABLE     | Name of the s6-overlay service (used as the directory name under `/etc/s6-overlay/s6-rc.d/`). Null for config-only features. |
 | `s6RunScript`          | `text`    | NULLABLE     | Content of the s6-overlay `run` script for this service. Supports `{{option.KEY}}` interpolation. |
-| `ports`                | `json`    | NOT NULL     | Array of port definitions exposed by this feature. Each entry: `{ name, port, type }` where `type` is `HTTP`, `HTTPS`, `WEBSOCKET`, or `CUSTOM`. |
+| `ports`                | `json`    | NOT NULL     | Array of port definitions exposed by this feature. Each entry: `{ name, port, type, isPublic }` where `type` is `HTTP`, `HTTPS`, `WEBSOCKET`, or `CUSTOM`, and `isPublic` (boolean, default `false`) indicates whether this port may be shown to unauthenticated visitors on the public project page. |
 | `defaultEnv`           | `json`    | NOT NULL     | Default environment variables injected into the workspace at runtime. Supports `{{option.KEY}}` interpolation. |
 | `minRamMb`             | `int`     | NOT NULL, DEFAULT 0   | Additional RAM in megabytes this feature requires on top of the template baseline. Used during Docker server eligibility check. |
 | `minDiskGb`            | `float`   | NOT NULL, DEFAULT 0.0 | Additional disk space in gigabytes this feature requires on the target Docker server.    |
@@ -245,6 +245,7 @@ A project groups one or more Git repositories, a template, and a set of features
 | `ownerId`     | `uuid`    | FK → User         | The user who owns this project                           |
 | `templateId`  | `uuid`    | FK → Template     | Template used to provision workspace containers          |
 | `visibility`  | `enum`    | NOT NULL          | `PUBLIC` or `PRIVATE`                                    |
+| `portVisibility` | `json` | NULLABLE          | Project-level overrides for port public visibility. A JSON object mapping port names to booleans (e.g. `{"App": true, "VS Code": false}`). When a key is present it overrides the `isPublic` default declared on the template or feature port. When null or a port name is absent, the template/feature default applies. Only meaningful when `visibility` is `PUBLIC`. |
 | `minRamMb`    | `int`     | NULLABLE          | Override: minimum RAM in megabytes required to deploy a workspace in this project. If set, supersedes the template value when higher. |
 | `minDiskGb`   | `float`   | NULLABLE          | Override: minimum free disk in gigabytes required. If set, supersedes the template value when higher. |
 | `createdAt`   | `datetime`| NOT NULL          | Creation timestamp                                       |
@@ -390,6 +391,7 @@ Describes an individual service exposed by a workspace (e.g. a web server, a ter
 | `port`        | `int`     | NOT NULL           | Container port this service maps to                                                                                                                                        |
 | `protocol`    | `enum`    | NOT NULL           | `HTTP`, `HTTPS`, `WEBSOCKET`, `TCP`                                                                                                                                        |
 | `url`         | `string`  | NULLABLE           | Full reachable URL for this service, set after routing is established (e.g. `https://my-app-a3k9p-frontend.devsanctum.io`)                                                |
+| `isPublic`    | `boolean` | NOT NULL, DEFAULT false | Whether this service port is visible to unauthenticated visitors on the public project page. Derived at workspace creation time from the effective port visibility hierarchy: project `portVisibility` override → template/feature `isPublic` default. |
 | `createdAt`   | `datetime`| NOT NULL           | Creation timestamp                                                                                                                                                         |
 
 **Relations:**

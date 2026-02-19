@@ -14,7 +14,7 @@ An admin defines a new template by providing:
 - A list of **APK packages** to install at build time (e.g. `nodejs`, `npm`, `git`).
 - A list of **shared folders** — absolute paths mounted as shared volumes across all workspaces (e.g. `/home/user/projects`).
 - Optional **Docker instructions** — raw Dockerfile directives appended after the base setup (e.g. `RUN npm install -g typescript`).
-- **Exposed ports** with protocols.
+- **Exposed ports** with protocols and public visibility flags.
 - **Default environment variables**.
 - An optional **start command** override.
 - **Minimum resource requirements**:
@@ -77,7 +77,7 @@ An admin opens the library browser (`/admin/library`), finds a template, and cli
 - **Shared folders** — dynamic list of absolute path inputs. Each path is mounted as a Docker volume shared across all workspaces using this template. Add/remove rows. Example: `/home/user`, `/workspace/shared`.
 
 #### Tab 4 — Services
-- **Exposed ports** — dynamic list: port number + protocol dropdown (`HTTP` / `HTTPS` / `TCP`). Add/remove rows.
+- **Exposed ports** — dynamic list: port number + protocol dropdown (`HTTP` / `HTTPS` / `TCP`) + **Public** toggle (whether this port may be shown to unauthenticated visitors on a public project page; default: off). Add/remove rows.
 - **Environment variables** — dynamic key/value table. Add/remove rows.
 - **Start command** — optional text input.
 

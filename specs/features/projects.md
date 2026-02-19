@@ -12,7 +12,7 @@ A user creates a project by providing a name, selecting a template, adding one o
 The user may also set **minimum resource requirements** (`minRamMb`, `minDiskGb`) on the project to override or raise the template baseline. These values are used at workspace deployment time to filter eligible Docker servers.
 
 ### UC-2: List accessible projects
-A user sees all projects they own or that are accessible through a group they belong to. Public projects are also discoverable by authenticated users.
+A user sees all projects they own or that are accessible through a group they belong to. Public projects are also discoverable by authenticated users and by unauthenticated (public) visitors.
 
 ### UC-3: View project details
 A user views the project configuration: repositories, template, features, assigned groups (with roles), and their own effective role (derived from group membership).
@@ -30,7 +30,10 @@ The owner can transfer project ownership to another member.
 Only the owner can delete a project. All workspaces must be destroyed first.
 
 ### UC-8: Make a project public
-The owner or a `MANAGE` member toggles visibility to `PUBLIC`. Public projects are visible to all authenticated users, who can view them but cannot deploy workspaces unless explicitly added as a member.
+The owner or a `MANAGE` member toggles visibility to `PUBLIC`. Public projects are visible to all authenticated users and to unauthenticated visitors, who can view the project and its running workspaces but cannot deploy workspaces unless explicitly added as a member.
+
+### UC-9: Configure public port visibility
+The owner or a `MANAGE` member controls which of the project's exposed ports are visible to unauthenticated visitors. For each port inherited from the template or from an activated feature, the project-level `portVisibility` setting can override the default `isPublic` value declared on the template or feature. Ports set to public are shown (with live URLs) on the public project page for running workspaces.
 
 ---
 
@@ -71,6 +74,13 @@ The owner or a `MANAGE` member toggles visibility to `PUBLIC`. Public projects a
 ### Visibility Toggle
 - Toggle labeled **Private** / **Public** in Settings.
 - Changing to Public shows a confirmation modal explaining the implications.
+
+### Public Port Visibility
+- Located in Settings, visible only when the project visibility is `PUBLIC`.
+- Shows a table of all ports exposed by the selected template and activated features. Columns: **Port**, **Name**, **Type**, **Visible to public** (toggle).
+- The **Visible to public** toggle defaults to the `isPublic` value declared on the source template or feature. The project owner or a `MANAGE` member can override this per port.
+- Tooltip on each toggle: "When ON, this port's live URL is shown to unauthenticated visitors on the public project page."
+- Changes are saved as part of the project settings.
 
 ### Role Badge
 - `READ` — gray badge.
