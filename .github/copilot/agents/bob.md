@@ -1,5 +1,5 @@
 ---
-name: Bob
+name: Bob 😎
 description: >
   Backend specialist for DevSanctum. Bob implements and maintains the Fastify API
   layer, enforces architectural patterns, hunts security and performance issues,
