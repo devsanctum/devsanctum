@@ -4,6 +4,8 @@ Auth required: **admin only** — non-admin authenticated users are redirected t
 
 Primary goal: let an administrator browse all registered users, invite new ones, remove accounts, manage group membership, and inspect what each user owns.
 
+Shell & navigation: see **[navigation.md](navigation.md) §4**. **Users** is the active admin sidebar item.
+
 Related pages: [dashboard.md](dashboard.md) (admin summary bar links here), [admin-invitations.md](admin-invitations.md) (pending invitations list).
 
 ---
@@ -12,26 +14,26 @@ Related pages: [dashboard.md](dashboard.md) (admin summary bar links here), [adm
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Header: Logo · Dashboard · Projects · Explore · Admin ▼        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Admin / Users                                                   │
-│                                                                  │
-│  ┌── Filters ─────────────────────────────┐  [ + Invite user ]  │
-│  │ Search by name or email   Role ▾       │                     │
-│  └────────────────────────────────────────┘                     │
-│                                                                  │
-│  ┌── Users table ──────────────────────────────────────────┐   │
-│  │  Avatar  Name / Email       Role    Groups   Joined      │   │
-│  │  ───────────────────────────────────────────────────     │   │
-│  │  [row]                                         [⋯]      │   │
-│  │  [row]                                         [⋯]      │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                                                                  │
-│  Showing 1–25 of 42   [ ← Prev ]  [ Next → ]                   │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+│  Topbar                                             [Avatar ▾]  │
+├──────────────────┬──────────────────────────────────────────────┤
+│  ← Back to app  │  Admin / Users                               │
+│  ADMINISTRATION  │                                              │
+│  Overview        │  ┌── Filters ─────────────────────────┐    │
+│  INFRASTRUCTURE  │  │ Search by name or email   Role ▾   │    │
+│  Docker Servers  │  └─────────────────────────────────────┘   │
+│  Templates       │                        [ + Invite user ]    │
+│  Features        │  ┌────────────────────────────────────────┐ │
+│  PEOPLE          │  │  Avatar  Name / Email   Role  Groups ⋯ │ │
+│  Users      ◄    │  │  ─────────────────────────────────────  │ │
+│  Groups          │  │  [row]                          [⋯]    │ │
+│  Invitations     │  │  [row]                          [⋯]    │ │
+│  PLATFORM        │  └────────────────────────────────────────┘ │
+│  Audit Logs      │  Showing 1–25 of 42  [ ← Prev ] [ Next → ] │
+│  Configuration   │                                              │
+└──────────────────┴──────────────────────────────────────────────┘
 ```
+
+Page root: `PageLayout` with the admin sidebar (see [navigation.md](navigation.md) §4). **Users** is the active admin sidebar item.
 
 ---
 

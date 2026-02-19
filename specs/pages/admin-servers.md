@@ -4,6 +4,8 @@ Auth required: **admin only** — non-admin authenticated users are redirected t
 
 Primary goal: let an administrator register Docker daemon hosts, monitor their health and resource usage, manage group assignments, inspect running workspaces, and remove servers.
 
+Shell & navigation: see **[navigation.md](navigation.md) §4**. **Docker Servers** is the active admin sidebar item.
+
 Related spec: [specs/features/docker-servers.md](../features/docker-servers.md) (full domain model, server selection algorithm, resource polling).
 
 ---
@@ -12,24 +14,26 @@ Related spec: [specs/features/docker-servers.md](../features/docker-servers.md) 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Header: Logo · Dashboard · Projects · Explore · Admin ▼        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Admin / Docker Servers                                          │
-│                                                                  │
-│  ┌── Status filter ─────────────────────┐  [ + Add server ]     │
-│  │  All ▾                               │                       │
-│  └──────────────────────────────────────┘                       │
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Name  Host:Port  Status  CPU  RAM  Disk  Workspaces  ⋯ │   │
-│  │  ──────────────────────────────────────────────────────  │   │
-│  │  [row]                                                   │   │
-│  │  [row]                                                   │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+│  Topbar                                             [Avatar ▾]  │
+├──────────────────┬──────────────────────────────────────────────┤
+│  ← Back to app  │  Admin / Docker Servers                      │
+│  ADMINISTRATION  │                                              │
+│  Overview        │  ┌── Status filter ──────────────────┐     │
+│  INFRASTRUCTURE  │  │  All ▾                            │     │
+│  Docker Srvrs ◄  │  └───────────────────────────────────┘     │
+│  Templates       │                       [ + Add server ]      │
+│  Features        │  ┌────────────────────────────────────┐    │
+│  PEOPLE          │  │  Name  Host  Status  RAM  Disk  ⋯  │    │
+│  Users           │  │  ──────────────────────────────     │    │
+│  Groups          │  │  [row]                              │    │
+│  Invitations     │  │  [row]                              │    │
+│  PLATFORM        │  └────────────────────────────────────┘    │
+│  Audit Logs      │                                              │
+│  Configuration   │                                              │
+└──────────────────┴──────────────────────────────────────────────┘
 ```
+
+Page root: `PageLayout` with the admin sidebar (see [navigation.md](navigation.md) §4). **Docker Servers** is the active admin sidebar item.
 
 ---
 

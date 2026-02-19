@@ -4,6 +4,8 @@ Auth required: **admin only** — non-admin authenticated users are redirected t
 
 Primary goal: let an administrator browse all available features, create custom ones, and import community-published features from the library marketplace — without leaving the platform.
 
+Shell & navigation: see **[navigation.md](navigation.md) §4**. **Features** is the active admin sidebar item.
+
 Related pages: [admin-templates.md](admin-templates.md) (features are selected when building a template), [admin-template-form.md](admin-template-form.md).
 Related spec: [specs/features/features.md](../features/features.md) (full domain model, option types, dependency rules), [specs/features/library.md](../features/library.md) (index files, caching, API).
 
@@ -13,21 +15,26 @@ Related spec: [specs/features/features.md](../features/features.md) (full domain
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Header: Logo · Dashboard · Projects · Explore · Admin ▼        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Admin / Features                                                │
-│                                                                  │
-│  ┌── Filters ────────────────────────────┐  [ ↓ Browse library ]  [ + New Feature ] │
-│  │ Search by name         Type ▾         │                      │
-│  └───────────────────────────────────────┘                      │
-│                                                                  │
-│  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐                           │
-│  │card │  │card │  │card │  │card │   …                        │
-│  └─────┘  └─────┘  └─────┘  └─────┘                           │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+│  Topbar                                             [Avatar ▾]  │
+├──────────────────┬──────────────────────────────────────────────┤
+│  ← Back to app  │  Admin / Features                            │
+│  ADMINISTRATION  │                                              │
+│  Overview        │  ┌── Filters ──────────────────────────┐   │
+│  INFRASTRUCTURE  │  │ Search by name         Type ▾       │   │
+│  Docker Servers  │  └─────────────────────────────────────┘   │
+│  Templates       │  [ ↓ Browse library ]  [ + New Feature ]   │
+│  Features   ◄    │                                              │
+│  PEOPLE          │  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐      │
+│  Users           │  │card │  │card │  │card │  │card │  …    │
+│  Groups          │  └─────┘  └─────┘  └─────┘  └─────┘      │
+│  Invitations     │                                              │
+│  PLATFORM        │                                              │
+│  Audit Logs      │                                              │
+│  Configuration   │                                              │
+└──────────────────┴──────────────────────────────────────────────┘
 ```
+
+Page root: `PageLayout` with the admin sidebar (see [navigation.md](navigation.md) §4). **Features** is the active admin sidebar item.
 
 Card grid: 4 cols → 3 on tablet → 1 on mobile.
 

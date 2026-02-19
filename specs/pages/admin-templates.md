@@ -13,28 +13,23 @@ Related pages: [admin-template-form.md](admin-template-form.md) (create / edit f
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Header: Logo · Dashboard · Projects · Explore · Admin  [Avatar]│
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Admin                                                          │
-│  ── UnderlineNav ──────────────────────────────────────────     │
-│  Users   Groups   Templates   Features   Servers   Invitations  │
-│                                                                  │
-│  Templates               [ Import from library ]  [ + New ]     │
-│                                                                  │
-│  [ Search templates… ]                                          │
-│                                                                  │
-│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐       │
-│  │  Node.js      │  │  Python       │  │  Go           │  …    │
-│  │  Alpine 3.19  │  │  Alpine 3.19  │  │  Alpine 3.20  │       │
-│  │  3 projects   │  │  1 project    │  │  2 projects   │       │
-│  │ [Edit][Delete]│  │ [Edit][Delete]│  │ [Edit][Delete]│       │
-│  └───────────────┘  └───────────────┘  └───────────────┘       │
-│                                                                  │
-│  Empty state: "No templates yet.                                 │
-│   Create one or import from the library to get started."        │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+│  Topbar                                             [Avatar ▾]  │
+├──────────────────┬──────────────────────────────────────────────┤
+│  ← Back to app  │  Admin / Templates                           │
+│  ADMINISTRATION  │                                              │
+│  Overview        │  [ Search templates… ]                      │
+│  INFRASTRUCTURE  │  [ ↓ From library ]  [ + New ]              │
+│  Docker Servers  │  ┌───────────────┐  ┌───────────────┐       │
+│  Templates  ◄    │  │  Node.js      │  │  Python       │  …    │
+│  Features        │  │  Alpine 3.19  │  │  Alpine 3.19  │       │
+│  PEOPLE          │  │  3 projects   │  │  1 project    │       │
+│  Users           │  │ [Edit][Delete]│  │ [Edit][Delete]│       │
+│  Groups          │  └───────────────┘  └───────────────┘       │
+│  Invitations     │                                              │
+│  PLATFORM        │                                              │
+│  Audit Logs      │                                              │
+│  Configuration   │                                              │
+└──────────────────┴──────────────────────────────────────────────┘
 ```
 
 Page root: `PageLayout` with the admin sidebar (see [navigation.md](navigation.md) §4). **Templates** is the active admin sidebar item.

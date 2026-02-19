@@ -8,7 +8,8 @@ This document describes:
 3. The **admin sidebar** — replaces the contextual sidebar inside `/admin/*` routes.
 4. **Responsive behaviour** on narrow viewports.
 
-Related pages: [dashboard.md](dashboard.md), [new-project.md](new-project.md), [admin-templates.md](admin-templates.md).
+Related pages (main app): [dashboard.md](dashboard.md), [workspaces.md](workspaces.md), [explore.md](explore.md), [new-project.md](new-project.md).
+Related pages (admin): [admin-overview.md](admin-overview.md), [admin-servers.md](admin-servers.md), [admin-templates.md](admin-templates.md), [admin-features.md](admin-features.md), [admin-users.md](admin-users.md), [admin-groups.md](admin-groups.md), [admin-invitations.md](admin-invitations.md), [admin-audit-logs.md](admin-audit-logs.md), [admin-configuration.md](admin-configuration.md).
 
 ---
 
@@ -282,17 +283,28 @@ The active item is determined by an **exact or prefix match** on the current pat
 | Current route | Active sidebar item |
 |---------------|---------------------|
 | `/dashboard` | Dashboard |
+| `/explore` | Explore |
+| `/workspaces` | — (no dedicated item; §3.1 sidebar remains, nothing highlighted) |
+| `/workspaces/:slug` | The matching workspace row (§3.2 from parent project) + Overview (§3.3) |
 | `/projects` | Projects heading (no individual item) |
 | `/projects/new` | + New project |
 | `/projects/:id` | The matching project row (§3.1) + Overview (§3.2) |
 | `/projects/:id/workspaces` | The matching project row + Workspaces (§3.2) |
-| `/workspaces/:id` | The matching workspace row (§3.2) + Overview (§3.3) |
-| `/admin` | Admin Overview |
+| `/projects/:id/access` | The matching project row + Access (§3.2) |
+| `/projects/:id/settings` | The matching project row + Settings (§3.2) |
+| `/admin` | Overview |
 | `/admin/servers` | Docker Servers |
 | `/admin/templates` | Templates |
-| `/admin/templates/new` | Templates (parent item, not a child row) |
+| `/admin/templates/new` | Templates |
 | `/admin/templates/:id/edit` | Templates |
 | `/admin/features` | Features |
+| `/admin/features/new` | Features |
+| `/admin/features/:id/edit` | Features |
+| `/admin/users` | Users |
+| `/admin/groups` | Groups |
+| `/admin/invitations` | Invitations |
+| `/admin/audit-logs` | Audit Logs |
+| `/admin/configuration` | Configuration |
 
 When a project page is active, both the project row **and** the relevant sub-item (Overview, Workspaces, etc.) are highlighted simultaneously.
 

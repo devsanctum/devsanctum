@@ -13,25 +13,23 @@ Related pages: [admin-templates.md](admin-templates.md) (list / import).
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Header: Logo · Dashboard · Projects · Explore · Admin  [Avatar]│
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ← Templates                                                     │
-│                                                                  │
-│  New template               (edit mode: "Edit Node.js")         │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │ General │ Packages │ Storage │ Services │ Features       │   │
-│  ├──────────────────────────────────────────────────────────┤   │
-│  │                                                          │   │
-│  │  (active tab content)                                    │   │
-│  │                                                          │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                                                                  │
-│  ────────────────────────────────────────────────────────────   │
-│                                    [ Cancel ]  [ Save template ] │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+│  Topbar                                             [Avatar ▾]  │
+├──────────────────┬──────────────────────────────────────────────┤
+│  ← Back to app  │  ← Templates                                 │
+│  ADMINISTRATION  │                                              │
+│  Overview        │  New template  (edit: "Edit Node.js")        │
+│  INFRASTRUCTURE  │                                              │
+│  Docker Servers  │  ┌─ General ─■─ Packages ─ Storage ─ … ──┐  │
+│  Templates  ◄    │  │                                        │  │
+│  Features        │  │  (active tab content)                  │  │
+│  PEOPLE          │  │                                        │  │
+│  Users           │  └────────────────────────────────────────┘  │
+│  Groups          │  ────────────────────────────────────────    │
+│  Invitations     │          [ Cancel ]  [ Save template ]       │
+│  PLATFORM        │                                              │
+│  Audit Logs      │                                              │
+│  Configuration   │                                              │
+└──────────────────┴──────────────────────────────────────────────┘
 ```
 
 Page root: `PageLayout` with the admin sidebar (see [navigation.md](navigation.md) §4). **Templates** is the active admin sidebar item.  
