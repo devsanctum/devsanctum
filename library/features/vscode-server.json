@@ -13,7 +13,8 @@
     {
       "name": "VS Code",
       "port": 8080,
-      "type": "HTTP"
+      "type": "HTTP",
+      "isPublic": false
     }
   ],
   "defaultEnv": {
