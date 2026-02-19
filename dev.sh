@@ -14,6 +14,16 @@ if [ ! -f "DEVELOPMENT.md" ]; then
     exit 1
 fi
 
+# Check if .env files exist, copy from example if not
+if [ ! -f "backend/.env" ]; then
+    if [ -f "backend/.env.example" ]; then
+        echo "📋 No backend .env found, copying from .env.example..."
+        cp backend/.env.example backend/.env
+    else
+        echo "⚠️  Warning: No backend .env or .env.example found"
+    fi
+fi
+
 # Check if node_modules exist
 if [ ! -d "backend/node_modules" ]; then
     echo "📦 Installing backend dependencies..."
