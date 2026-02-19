@@ -42,6 +42,7 @@ All project specifications are located in the [`specs/`](specs/) folder.
 | [`specs/architecture.md`](specs/architecture.md) | System architecture, MVC structure, SOLID principles, routing design |
 | [`specs/database.md`](specs/database.md) | Full relational data model (15 tables) |
 | [`specs/ux.md`](specs/ux.md) | UX principles, async states, forms, navigation, accessibility, microcopy |
+| [`specs/theming.md`](specs/theming.md) | Color palette, design tokens, dark mode plan, contrast ratios |
 | [`specs/features/ui-components.md`](specs/features/ui-components.md) | Primer React component usage reference by use case |
 | [`specs/features/`](specs/features/) | Feature specifications with use cases and UI/UX |
 | [`specs/features/admin/`](specs/features/admin/) | Administration panel features |

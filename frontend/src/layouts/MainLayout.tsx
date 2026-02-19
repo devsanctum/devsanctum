@@ -1,14 +1,13 @@
 import { Outlet } from 'react-router-dom';
 import { Box, Header, Text, PageLayout } from '@primer/react';
-import { MarkGithubIcon } from '@primer/octicons-react';
 
 function MainLayout() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Header>
         <Header.Item>
-          <Header.Link href="/" sx={{ fontSize: 2, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 2 }}>
-            <MarkGithubIcon size={32} />
+          <Header.Link href="/" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 2 }}>
+            <img src="/logo.svg" alt="DevSanctum logo" width={32} height={32} style={{ borderRadius: 4 }} />
             DevSanctum
           </Header.Link>
         </Header.Item>

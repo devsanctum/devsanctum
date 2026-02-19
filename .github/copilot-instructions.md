@@ -231,3 +231,4 @@ Refer to `specs/ux.md` for the full UX specification. Key rules:
 - Technology Stack: `specs/stack.md`
 - UI Components Reference: `specs/features/ui-components.md`
 - UX Standards: `specs/ux.md`
+- Theming Guide: `specs/theming.md`
