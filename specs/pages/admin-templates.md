@@ -37,15 +37,15 @@ Related pages: [admin-template-form.md](admin-template-form.md) (create / edit f
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-Page root: `PageLayout` without a sidebar. Content is full-width inside the admin shell.
+Page root: `PageLayout` with the admin sidebar (see [navigation.md](navigation.md) §4). **Templates** is the active admin sidebar item.
 
 ---
 
 ## 2. Navigation
 
-Standard authenticated `Header`. The admin section uses an `UnderlineNav` below the header for top-level admin tabs:  
-**Users · Groups · Templates · Features · Servers · Invitations**.  
-`Templates` is the active tab on this page.
+See **[navigation.md](navigation.md) §4** for the full admin sidebar. On this page:
+- Active item: **Templates**.
+- Back link **← Back to app** in the sidebar returns to `/dashboard`.
 
 ---
 

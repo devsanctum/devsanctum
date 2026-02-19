@@ -4,33 +4,31 @@ Auth required: **yes** — redirect to `/login?redirect=/dashboard` if not authe
 
 Primary goal: give the authenticated user an instant overview of platform health and their own development activity. Make it effortless to resume work, spot problems, and deploy quickly.
 
+Shell & navigation: see **[navigation.md](navigation.md)**. The dashboard activates the **Dashboard** item in the sidebar (§3.1 of that spec).
+
 ---
 
 ## 1. Layout
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Header: Logo · Dashboard · Projects · Explore · Admin? ·[Avatar]│
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  [ADMIN ONLY] Summary bar                                        │
-│  [ Users: 14 ]  [ Servers: 3/4 ]  [ Workspaces: 7 ]  [ Invites: 2 ] │
-│                                                                  │
-│  Page heading: "Dashboard"           [ + New Project ]           │
-│                                                                  │
-│  ── Docker Server Vitals ──────────────────────────────────────  │
-│  Server card   Server card   Server card   …                     │
-│                                                                  │
-│  ── My Projects & Workspaces ──────────────────────────────────  │
-│  ▶  project-name  [badge]  3 running / 5 total  Last: 2h ago    │
-│      ↳ Workspace card  Workspace card  …  [+ Deploy]            │
-│  ▶  project-name  …                                             │
-│                                                                  │
-│  ── Recent Git Activity ───────────────────────────────────────  │
-│  [Avatar] author   workspace › repo@branch   "message"   2h ago  │
-│  [Avatar] author   …                                             │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+│  Topbar                                             [Avatar ▾]  │
+├──────────────────┬──────────────────────────────────────────────┤
+│  Dashboard   ◄   │  [ADMIN ONLY] Summary bar                   │
+│  Explore         │  [ Users: 14 ] [ Servers: 3/4 ] [ WS: 7 ]  │
+│  ── Projects ──  │                                              │
+│  └ my-api    3🟢 │  Dashboard              [ + New Project ]   │
+│  └ frontend  1🟢 │                                              │
+│  └ pipeline      │  ── Docker Server Vitals ────────────────── │
+│  + New project   │  Server card   Server card   Server card    │
+│  ────────────    │                                              │
+│  Groups          │  ── My Projects & Workspaces ─────────────  │
+│  Profile         │  ▶ project-name  3 running / 5 total        │
+│                  │      ↳ WS card  WS card  [+ Deploy]         │
+│                  │                                              │
+│                  │  ── Recent Git Activity ────────────────── │
+│                  │  [Avatar] author  repo@branch  "msg"  2h    │
+└──────────────────┴──────────────────────────────────────────────┘
 ```
 
 ---

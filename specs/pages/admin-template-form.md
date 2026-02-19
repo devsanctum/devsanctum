@@ -34,7 +34,8 @@ Related pages: [admin-templates.md](admin-templates.md) (list / import).
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-Page root: `PageLayout` without sidebar. Form is constrained to `max-width: 800px`, centered.  
+Page root: `PageLayout` with the admin sidebar (see [navigation.md](navigation.md) §4). **Templates** is the active admin sidebar item.  
+Form is constrained to `max-width: 800px`, centered inside `PageLayout.Content`.  
 Tabs: `UnderlineNav` — **General · Packages · Storage · Services · Features**.  
 Sticky footer: always visible at the bottom of the viewport.
 
@@ -44,7 +45,7 @@ Sticky footer: always visible at the bottom of the viewport.
 
 ## 2. Navigation Header
 
-Standard admin `Header`. Back link: **← Templates** → `/admin/templates`.
+See **[navigation.md](navigation.md) §4** for the admin sidebar. Back link in the sidebar: **← Back to app** → `/dashboard`. Within the content area, a breadcrumb back link **← Templates** → `/admin/templates` is shown above the page heading.
 
 Page `Heading` (h2):
 - Create mode: `"New template"`

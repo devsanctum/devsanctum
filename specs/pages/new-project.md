@@ -4,6 +4,8 @@ Auth required: **yes** — redirect to `/login?redirect=/projects/new` if not au
 
 Primary goal: let any authenticated user create a new project quickly. The form follows a single-page, top-to-bottom layout inspired by GitHub's repository creation page — no wizard, no steps, no modal. Required fields come first; optional configuration follows below a visual separator.
 
+Shell & navigation: see **[navigation.md](navigation.md)**. This page activates **+ New project** in the sidebar (§3.1 of that spec).
+
 Related features: [projects.md](../features/projects.md), [templates.md](../features/templates.md), [features.md](../features/features.md).
 
 ---
@@ -12,14 +14,26 @@ Related features: [projects.md](../features/projects.md), [templates.md](../feat
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Header: Logo · Dashboard · Projects · Explore · Admin? [Avatar]│
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ← Projects                                                      │
-│                                                                  │
-│  Create a new project                                            │
-│  A project groups repositories, picks an environment template,  │
-│  and lets your team deploy workspaces.                           │
+│  Topbar                                               [Avatar ▾] │
+├───────────────────┬─────────────────────────────────────────────┤
+│  Dashboard       │  ← Projects                                   │
+│  Explore         │                                              │
+│  ── Projects ──   │  Create a new project                         │
+│  └ my-api        │  A project groups repos, picks a template…    │
+│  + New project ◄ │  ──────────────────────────────────────────  │
+│  ─────────────────│  [owner] / [project-name]                   │
+│  Groups          │  Description                                  │
+│  Profile         │  Template picker                              │
+│                  │  Visibility                                   │
+│                  │  ──────────────────────────────────────────  │
+│                  │  Repositories                                 │
+│                  │  Features                                     │
+│                  │  Advanced                                     │
+│                  │  ────  [ Cancel ]  [ Create project ]           │
+└──────────────────┴─────────────────────────────────────────────┘
+```
+
+Page root: `PageLayout` with the standard authenticated sidebar. The form content is constrained to `max-width: 768px`, centered inside `PageLayout.Content`.
 │                                                                  │
 │  ─────────────────────────────────────────────────────────────  │
 │                                                                  │
@@ -71,9 +85,7 @@ Page root uses `PageLayout` without a sidebar pane. The form is constrained to a
 
 ## 2. Navigation Header
 
-Standard authenticated header (see [dashboard.md](dashboard.md)).
-
-Back link at the top of the content area: **← Projects** → `/projects`.
+Standard authenticated shell. See [navigation.md](navigation.md) — sidebar context: §3.1 (Dashboard / Projects), **+ New project** item active.
 
 ---
 
