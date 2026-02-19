@@ -47,14 +47,17 @@ The owner or a `MANAGE` member controls which of the project's exposed ports are
 - Clicking a card navigates to the project detail page.
 
 ### New Project Page (`/projects/new`)
-- Step-by-step form (wizard or single scrollable page):
-  1. **General** — Name, description, visibility.
-  2. **Template** — Select from a card grid of available templates.
-  3. **Repositories** — Add one or more Git URLs with a short name each.
-  4. **Features** — Multi-select feature cards.
-  5. **Resources** — Optional overrides for `minRamMb` and `minDiskGb`. Displays the effective requirement computed from template + features so the user can see the current floor before overriding.
-  6. **Review** — Summary before saving.
-- CTA: **Create Project**.
+See **[specs/pages/new-project.md](../pages/new-project.md)** for the full page specification.
+
+Summary of fields collected:
+- **Name** (required) + slug preview
+- **Description** (optional)
+- **Template** (required) — radio-style card picker
+- **Visibility** — Private (default) or Public
+- **Repositories** — one or more rows of `{ name, gitUrl }` (at least one required)
+- **Features** — optional multi-select card grid
+- **Resource overrides** — optional `minRamMb` / `minDiskGb`, collapsed under an *Advanced* section
+- CTA: **Create project**.
 
 ### Project Detail Page (`/projects/:id`)
 - Top section: project name, owner, visibility badge, template badge, CTA **Deploy Workspace**.
@@ -88,10 +91,5 @@ The owner or a `MANAGE` member controls which of the project's exposed ports are
 - `MANAGE` — purple badge.
 - `OWNER` — gold badge.
 
-### New Project Wizard — Access Step
-A step is added to the project creation wizard between **Features** and **Review**:
-
-**Step 5 — Access:**
-- Assign one or more groups from a searchable dropdown.
-- Set a role per group.
-- At least one group with `DEPLOY` or `MANAGE` is recommended (warning shown if skipped).
+### Post-creation: Access
+After creating a project the user is redirected to the project detail page. Group access is managed from the **Access** tab of that page (see *Access Tab* section above), not during creation. This keeps the creation form lean.
