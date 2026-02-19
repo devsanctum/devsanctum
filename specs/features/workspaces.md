@@ -5,6 +5,51 @@ A workspace is a live, isolated development environment deployed as a Docker con
 
 ---
 
+## Workspace Slug — Secure URL Identifier
+
+Every workspace is assigned a **slug** at creation time. The slug is:
+
+- **8 characters** long.
+- Encoded in **base 36** (digits `0–9` + lowercase letters `a–z`, giving 36⁸ ≈ 2.8 trillion possible values).
+- Generated using a cryptographically secure random source (`crypto.randomBytes`), not a sequential counter or UUID truncation.
+- **Immutable** — never changed after creation.
+- **Globally unique** (enforced by a unique index on the `Workspace.slug` column).
+
+The slug is the sole component of the workspace subdomain:
+```
+<slug>.<platform-domain>
+```
+Example: `k4x8m2pq.devsanctum.io`
+
+For individual services, the service slug is appended:
+```
+<workspace-slug>-<service-slug>.<platform-domain>
+```
+Example: `k4x8m2pq-vscode.devsanctum.io`
+
+### Security rationale
+
+A UUID primary key (`id`) must never appear in a public-facing URL — it can be enumerated or leaked through logs. The base-36 slug is opaque, hard to guess (birthday collision probability < 1% at 1 million workspaces), and carries no sequential or structural information. Private workspaces behind the slug are still protected by authentication middleware; the slug is a second layer that prevents accidental URL discovery.
+
+### Generation helper (backend)
+
+```ts
+import { randomBytes } from 'crypto';
+
+const BASE36_CHARS = '0123456789abcdefghijklmnopqrstuvwxyz';
+
+export function generateWorkspaceSlug(): string {
+  const bytes = randomBytes(8);
+  return Array.from(bytes)
+    .map(b => BASE36_CHARS[b % 36])
+    .join('');
+}
+```
+
+Collision check: after generating the slug, the backend verifies uniqueness with a `SELECT` before inserting. On collision (astronomically rare), it regenerates once and retries.
+
+---
+
 ## Use Cases
 
 ### UC-1: Deploy a workspace

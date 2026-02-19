@@ -394,7 +394,7 @@ A running or stopped development environment. A workspace is tied to a project, 
 | `branch`         | `string`  | NOT NULL              | Git branch this workspace is bound to                                       |
 | `status`         | `enum`    | NOT NULL              | `PENDING`, `STARTING`, `RUNNING`, `STOPPING`, `STOPPED`, `DESTROYED`       |
 | `visibility`     | `enum`    | NOT NULL              | `PUBLIC` or `PRIVATE`                                                                                                                                                  |
-| `slug`           | `string`  | UNIQUE, NOT NULL      | Short unique slug generated at creation (e.g. `a3k9p`). Combined with the project slug to form the workspace manager subdomain: `<project-slug>-<workspace-slug>.<platform-domain>`. Never changes after creation. |
+| `slug`           | `string`  | UNIQUE, NOT NULL      | 8-character base-36 (0–9, a–z) identifier generated at creation using a CSPRNG. Forms the workspace subdomain: `<slug>.<platform-domain>`. Immutable after creation. Never derived from the UUID `id`. See `specs/features/workspaces.md` → "Workspace Slug". |
 | `pinned`         | `boolean` | NOT NULL, DEFAULT false | If true, the workspace is exempt from inactivity shutdown and auto-deletion                                                                                         |
 | `kept`           | `boolean` | NOT NULL, DEFAULT false | If true, the 7-day auto-destroy policy is suspended                        |
 | `lastActivityAt` | `datetime`| NOT NULL              | Timestamp of the last detected activity in the workspace                    |
