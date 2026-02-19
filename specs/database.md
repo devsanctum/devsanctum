@@ -25,6 +25,7 @@ This document describes the full relational data model for the platform. All tab
 17. [Invitation](#17-invitation)
 18. [AuditLog](#18-auditlog)
 19. [PlatformConfig](#19-platformconfig)
+20. [CommitActivity](#20-commitactivity)
 
 ---
 
@@ -398,6 +399,7 @@ A running or stopped development environment. A workspace is tied to a project, 
 | `pinned`         | `boolean` | NOT NULL, DEFAULT false | If true, the workspace is exempt from inactivity shutdown and auto-deletion                                                                                         |
 | `kept`           | `boolean` | NOT NULL, DEFAULT false | If true, the 7-day auto-destroy policy is suspended                        |
 | `lastActivityAt` | `datetime`| NOT NULL              | Timestamp of the last detected activity in the workspace                    |
+| `lastPolledAt`   | `datetime`| NULLABLE              | Timestamp of the last successful git polling run (Mode B ingestion). Null until the first poll completes. Used by the background poller to determine the `--since` range for `git log`. |
 | `stopAt`         | `datetime`| NULLABLE              | Scheduled stop time (set to `lastActivityAt + 2h` if not pinned)           |
 | `destroyAt`      | `datetime`| NULLABLE              | Scheduled destroy time (set to `createdAt + 7d` unless kept or pinned)     |
 | `createdAt`      | `datetime`| NOT NULL              | Provisioning request timestamp                                              |
@@ -499,6 +501,40 @@ Key/value store for platform-wide configuration settings managed by administrato
 
 ---
 
+## 20. CommitActivity
+
+Stores individual Git commit records ingested from workspace branches, either via push webhooks or periodic polling. Used to populate the authenticated dashboard activity feed and the public project commit history.
+
+See **[features/git-activity.md](features/git-activity.md)** for the full ingestion specification.
+
+| Field             | Type       | Constraints                  | Description                                                                           |
+|-------------------|------------|------------------------------|---------------------------------------------------------------------------------------|
+| `id`              | `uuid`     | PK                           | Unique identifier                                                                     |
+| `workspaceId`     | `uuid`     | FK → Workspace, NOT NULL     | Workspace whose branch contains this commit                                           |
+| `projectId`       | `uuid`     | FK → Project, NOT NULL       | Denormalised project reference for efficient project-scoped queries                    |
+| `repoUrl`         | `string`   | NOT NULL                     | Git remote URL of the repository                                                     |
+| `branch`          | `string`   | NOT NULL                     | Branch name at time of recording                                                     |
+| `sha`             | `string`   | NOT NULL, 40 chars           | Full commit SHA                                                                       |
+| `message`         | `string`   | NOT NULL                     | Full commit message (subject line + optional body)                                   |
+| `authorName`      | `string`   | NOT NULL                     | Commit author display name                                                           |
+| `authorEmail`     | `string`   | NULLABLE                     | Commit author email — used to resolve `authorAvatarUrl` from a matching platform user |
+| `authorAvatarUrl` | `string`   | NULLABLE                     | Avatar URL from matched platform user; null when no match                             |
+| `committedAt`     | `datetime` | NOT NULL                     | Git author date                                                                       |
+| `createdAt`       | `datetime` | NOT NULL                     | Row insertion timestamp                                                               |
+
+**Unique constraint**: `(workspaceId, sha)` — a commit is never duplicated for the same workspace.
+
+**Indexes**:
+- `(projectId, committedAt DESC)` — public project commit feed.
+- `(workspaceId, committedAt DESC)` — workspace-scoped queries.
+- `(projectId, workspaceId, committedAt DESC)` — dashboard multi-project feed.
+
+**Relations:**
+- Belongs to `Workspace`
+- Belongs to `Project`
+
+---
+
 ## Entity Relationship Overview
 
 ```
@@ -511,6 +547,8 @@ User ──< GroupMember >── Group ──< ProjectGroup >── Project ─�
   └──< AuditLog       (server pool)          Template (parent, self-ref)
                                                      │
                                                Workspace ──< WorkspaceService
+                                                     │
+                                               CommitActivity
 
 PlatformConfig (global key/value store, standalone)
 ```

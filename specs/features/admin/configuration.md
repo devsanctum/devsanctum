@@ -132,3 +132,56 @@ The admin clicks **Reset to default** to restore the official DevSanctum library
 - **Reset to default** link below the input.
 - **Auto-refresh on startup** toggle.
 - Link: "Browse library →" navigates to `/admin/library`.
+
+---
+
+## API Endpoints
+
+### `GET /api/v1/admin/configuration`
+
+**Auth**: required. **Role**: `ADMIN` only.
+
+Returns the full platform configuration. Sensitive fields (SMTP password, OAuth secrets) are returned **masked** (`"••••••••"`) unless the request includes `?reveal=true`, which requires re-authentication (the user must have entered their password in the last 5 minutes — enforced via a `sensitiveConfirmedAt` claim in the JWT).
+
+**Response** (`200 OK`): all fields from the Configuration Sections above.
+
+---
+
+### `PATCH /api/v1/admin/configuration`
+
+**Auth**: required. **Role**: `ADMIN` only.
+
+Partial update — only the fields present in the body are modified.
+
+**Request body**: any subset of the configuration fields.
+
+An audit log entry (`platform.configuration.changed`) is written on every successful update, recording which settings changed (old → new), but **never** logging secret values.
+
+**Response** (`200 OK`): updated configuration (masked).
+
+---
+
+### `POST /api/v1/admin/configuration/test-smtp`
+
+**Auth**: required. **Role**: `ADMIN` only.
+
+Sends a test email using the current (saved or unsaved) SMTP configuration.
+
+**Request body**:
+```json
+{
+  "recipient": "string (valid email)"
+}
+```
+
+**Response**:
+- `200 OK` — `{ "success": true }` if the email was accepted by the SMTP server.
+- `422` — `{ "success": false, "error": "string" }` with the SMTP error message.
+
+---
+
+### `GET /api/v1/config/public` _(unauthenticated)_
+
+Exposes a **minimal, non-sensitive** subset of the platform configuration for unauthenticated visitors. Used by the public home page to render the hero section and conditionally show the Register button.
+
+See **[features/public-browsing.md](../public-browsing.md) UC-7** for the full specification of this endpoint.
