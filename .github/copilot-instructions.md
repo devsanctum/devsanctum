@@ -49,7 +49,7 @@ DevSanctum is a simplified self-hosted developer platform for provisioning and a
 ### Frontend (React + TypeScript)
 - **Components**: Use functional components with hooks
 - **State Management**: Use React hooks (useState, useReducer, useContext)
-- **Styling**: Use MUI (Material-UI) components and styling system
+- **Styling**: Use Primer React (`@primer/react`) components and styling system with GitHub's design tokens
 - **Error Boundaries**: Implement error boundaries for robust error handling
 - **Forms**: Use controlled components with proper validation
 - **API Calls**: Use async/await with proper error handling
@@ -91,7 +91,8 @@ DevSanctum is a simplified self-hosted developer platform for provisioning and a
 ### Frontend
 - **Framework**: React 18+
 - **Build Tool**: Vite
-- **UI Library**: MUI (Material-UI)
+- **UI Library**: Primer React (`@primer/react`) + `@primer/octicons-react`
+- **CSS-in-JS**: styled-components
 - **Routing**: React Router
 - **HTTP Client**: fetch or axios
 
@@ -180,7 +181,7 @@ DevSanctum is a simplified self-hosted developer platform for provisioning and a
 1. Create component file in appropriate directory
 2. Define props interface
 3. Implement component with TypeScript
-4. Use MUI components for styling
+4. Use Primer React components for styling (`Box`, `Text`, `Heading`, `Button`, etc.)
 5. Add prop validation
 6. Write component tests
 7. Export from index file

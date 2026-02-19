@@ -1,7 +1,9 @@
-import { Typography, Box, Button } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Box, Heading, Text, Button } from '@primer/react';
+import { useNavigate } from 'react-router-dom';
 
 function NotFoundPage() {
+  const navigate = useNavigate();
+
   return (
     <Box
       sx={{
@@ -10,18 +12,20 @@ function NotFoundPage() {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '60vh',
+        gap: 3,
+        textAlign: 'center',
       }}
     >
-      <Typography variant="h1" gutterBottom>
+      <Heading as="h1" sx={{ fontSize: 8, color: 'fg.muted' }}>
         404
-      </Typography>
-      <Typography variant="h5" gutterBottom>
+      </Heading>
+      <Heading as="h2" sx={{ fontSize: 4 }}>
         Page Not Found
-      </Typography>
-      <Typography variant="body1" paragraph>
+      </Heading>
+      <Text as="p" sx={{ color: 'fg.muted' }}>
         The page you are looking for does not exist.
-      </Typography>
-      <Button component={Link} to="/" variant="contained" color="primary">
+      </Text>
+      <Button variant="primary" onClick={() => navigate('/')}>
         Go to Home
       </Button>
     </Box>

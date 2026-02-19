@@ -1,34 +1,39 @@
 import { Outlet } from 'react-router-dom';
-import { Box, AppBar, Toolbar, Typography, Container } from '@mui/material';
+import { Box, Header, Text, PageLayout } from '@primer/react';
+import { MarkGithubIcon } from '@primer/octicons-react';
 
 function MainLayout() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+      <Header>
+        <Header.Item>
+          <Header.Link href="/" sx={{ fontSize: 2, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 2 }}>
+            <MarkGithubIcon size={32} />
             DevSanctum
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Container component="main" sx={{ flex: 1, py: 4 }}>
-        <Outlet />
-      </Container>
+          </Header.Link>
+        </Header.Item>
+        <Header.Item full />
+      </Header>
+      <PageLayout containerWidth="xlarge" sx={{ flex: 1 }}>
+        <PageLayout.Content>
+          <Outlet />
+        </PageLayout.Content>
+      </PageLayout>
       <Box
-        component="footer"
+        as="footer"
         sx={{
-          py: 2,
-          px: 2,
+          py: 3,
+          px: 4,
           mt: 'auto',
-          backgroundColor: (theme) =>
-            theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
+          borderTopWidth: 1,
+          borderTopStyle: 'solid',
+          borderTopColor: 'border.default',
+          textAlign: 'center',
         }}
       >
-        <Container maxWidth="sm">
-          <Typography variant="body2" color="text.secondary" align="center">
-            DevSanctum © {new Date().getFullYear()}
-          </Typography>
-        </Container>
+        <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
+          DevSanctum © {new Date().getFullYear()}
+        </Text>
       </Box>
     </Box>
   );

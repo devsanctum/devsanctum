@@ -17,7 +17,9 @@ This document defines the core tooling used in this project.
 
 ## Frontend
 - **React** is used to build the web application UI.
-- **MUI (Material UI)** is the UI component library used to build and style the interface.
+- **Primer React** (GitHub's official design system) is the UI component library used to build and style the interface, providing a native GitHub look and feel.
+- **styled-components** is used as the CSS-in-JS styling engine required by Primer React.
+- **@primer/octicons-react** provides GitHub's Octicons icon set.
 
 ## Email
 - **Nodemailer** is used to send transactional emails (invitations, notifications).
@@ -62,7 +64,7 @@ This document defines the core tooling used in this project.
 - HTTP Server: Fastify
 - ORM: Prisma
 - Database: PostgreSQL (production), SQLite (development/testing)
-- Frontend: React + MUI + Vite
+- Frontend: React + Primer React + Vite
 - Testing: Jest/Vitest + React Testing Library + Supertest
 - Docker SDK: dockerode
 - Workspace base: Alpine + s6-overlay

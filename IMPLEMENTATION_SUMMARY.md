@@ -46,14 +46,14 @@ This document summarizes the implementation of the DevSanctum platform scaffoldi
 **Framework and Core**
 - React 18 with TypeScript
 - Vite for development server and build tool
-- Material-UI (MUI) component library
+- Primer component library
 - React Router for client-side routing
 
 **Components and Pages**
 - MainLayout with header, footer, and responsive container
 - HomePage with backend health status display
 - NotFoundPage for 404 errors
-- Theme configuration with MUI
+- Theme configuration with Primer
 
 **Testing**
 - Vitest test framework configured

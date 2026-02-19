@@ -12,7 +12,7 @@ This document provides instructions for setting up and running the DevSanctum pl
 ```
 devsanctum/
 ├── backend/          # Backend API (Fastify + Prisma + SQLite)
-├── frontend/         # Frontend Web App (React + MUI + Vite)
+├── frontend/         # Frontend Web App (React + Primer + Vite)
 ├── library/          # Official templates and features library
 ├── specs/            # Technical specifications
 └── .github/          # GitHub configuration and Copilot instructions
@@ -114,7 +114,7 @@ The frontend is configured to proxy API requests to the backend at `http://local
 - **React 18** - UI framework
 - **TypeScript** - Type-safe JavaScript
 - **Vite** - Build tool and dev server
-- **MUI (Material-UI)** - Component library
+- **Primer** - Component library - used by github
 - **React Router** - Client-side routing
 - **Vitest** - Testing framework
 - **React Testing Library** - Component testing

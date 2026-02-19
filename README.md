@@ -106,7 +106,7 @@ For detailed setup instructions, see [DEVELOPMENT.md](DEVELOPMENT.md).
 ### Tech Stack Summary
 
 - **Backend:** Node.js, TypeScript, Fastify, Prisma, SQLite (dev) / PostgreSQL (prod)
-- **Frontend:** React, TypeScript, MUI, Vite
+- **Frontend:** React, TypeScript, Primer, Vite
 - **Testing:** Vitest, React Testing Library
 - **Documentation:** OpenAPI/Swagger
 
