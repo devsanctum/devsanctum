@@ -60,3 +60,54 @@ The platform can fetch this library directly from GitHub (default) or from any c
 ## License
 
 See [LICENSE](LICENSE).
+
+---
+
+## Quick Start
+
+For detailed setup instructions, see [DEVELOPMENT.md](DEVELOPMENT.md).
+
+### Development Setup
+
+1. **Install dependencies:**
+   ```bash
+   cd backend && npm install
+   cd ../frontend && npm install
+   ```
+
+2. **Initialize the database:**
+   ```bash
+   cd backend
+   cp .env.example .env
+   npm run prisma:migrate
+   ```
+
+3. **Start development servers:**
+   
+   Option 1 - Use the dev script (starts both):
+   ```bash
+   ./dev.sh
+   ```
+   
+   Option 2 - Start manually:
+   ```bash
+   # Terminal 1 - Backend
+   cd backend && npm run dev
+   
+   # Terminal 2 - Frontend
+   cd frontend && npm run dev
+   ```
+
+4. **Access the application:**
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:3000
+   - API Documentation: http://localhost:3000/docs
+
+### Tech Stack Summary
+
+- **Backend:** Node.js, TypeScript, Fastify, Prisma, SQLite (dev) / PostgreSQL (prod)
+- **Frontend:** React, TypeScript, MUI, Vite
+- **Testing:** Vitest, React Testing Library
+- **Documentation:** OpenAPI/Swagger
+
+See [specs/stack.md](specs/stack.md) for complete technology details.
